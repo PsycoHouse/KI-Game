@@ -59,7 +59,7 @@
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
     <div class="hint">
-      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Bodyguards greifen Angreifer aktiv an, können selbst Schaden nehmen und sterben. Pistolen schießen auf Wesen und Bodyguards in Reichweite. Wenn ein Wesen mit Pistole oder Bodyguard tötet, zählt das wie Essen: Die Level-Leiste steigt und das Wesen heilt. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Wenn ein Wesen länger als 10 Sekunden ohne Fortschritt um ein Ziel kreist, bricht es aus und rennt 1 Sekunde in eine zufällige Himmelsrichtung. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Wenn Fleischfresser ihresgleichen auffressen, steigen sie sofort eine komplette Stufe auf. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum. Ab Level 7 wird ein Individuum zum stationären Nest mit 100 HP. Das Nest gründet ein Volk mit maximal 10 Dienern auf Level 3: bis zu 8 Verteidiger bleiben beim Nest, bis zu 2 Jäger suchen Gegner und sammeln Gold. Es gibt immer mindestens einen Jäger; bleiben nur Diener ohne Jäger übrig, wird automatisch ein Verteidiger zum Jäger. Jäger finanzieren neue Diener für je 3 Gold.<br>
+      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Bodyguards greifen Angreifer aktiv an, können selbst Schaden nehmen und sterben. Pistolen schießen auf Wesen und Bodyguards in Reichweite. Wenn ein Wesen mit Pistole oder Bodyguard tötet, zählt das wie Essen: Die Level-Leiste steigt und das Wesen heilt. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Wenn ein Wesen länger als 10 Sekunden ohne Fortschritt um ein Ziel kreist, bricht es aus und rennt 1 Sekunde in eine zufällige Himmelsrichtung. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Wenn Fleischfresser ihresgleichen auffressen, steigen sie sofort eine komplette Stufe auf. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum. Ab Level 7 wird ein Individuum zum stationären Nest mit 100 HP. Das Nest gründet ein Volk mit maximal 10 Dienern auf Level 3: bis zu 8 Verteidiger bleiben beim Nest, bis zu 2 Jäger suchen Gegner und sammeln Gold. Es gibt immer mindestens einen Jäger; bleiben nur Diener ohne Jäger übrig, wird automatisch ein Verteidiger zum Jäger. Jäger finanzieren neue Diener für je 3 Gold. Diener, ihr Nest und andere Diener desselben Nests gelten als Team und greifen sich nicht mehr gegenseitig an. Erreicht ein Diener Level 7, wird auch er zu einem eigenen Nest.<br>
       <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Veganer</span><span class="pill">Alt+Klick: Fleischfresser</span><span class="pill">Strg+Klick: Allesfresser</span>
     </div>
   </div>
@@ -165,7 +165,7 @@
       this.energy=clamp(this.energy-dt*this.maxEnergy/this.starveLimit,0,this.maxEnergy);
       if(this.starveTime>=this.starveLimit) this.die();
     }
-    preyList(){ return [...herbs,...preds,...omnis,...bodyguards,...nests].filter(c=>c!==this && c!==this.nest && c.owner!==this && c.nest!==this.nest && !c.dead); }
+    preyList(){ return [...herbs,...preds,...omnis,...bodyguards,...nests].filter(c=>!areTeammates(this,c) && !c.dead); }
     isBadlyWounded(){ return this.hp/this.maxHp<=.38; }
     injurySpeedFactor(){
       const hpPct=clamp(this.hp/this.maxHp,0,1);
@@ -296,7 +296,7 @@
     }
     gainLevel(){
       this.level++;
-      if(this.level>=7 && !this.nest){ this.becomeNest(); return; }
+      if(this.level>=7){ this.becomeNest(); return; }
       this.maxHp+=this.nextHpReward; this.hp=this.maxHp;
       this.r=this.baseR*(1+this.level*.12); this.maxEnergy+=6;
       this.nextLevelFood=Math.ceil(this.nextLevelFood*1.65); this.nextHpReward=Math.ceil(this.nextHpReward*1.55);
@@ -312,6 +312,7 @@
     }
     becomeNest(){
       this.dead=true;
+      if(this.nest) this.nest.forgetServant(this);
       addNest(this.x,this.y,this.type,this.name);
       for(const guard of this.bodyguards) guard.dead=true;
       burst(this.x,this.y,'nest');
@@ -345,7 +346,7 @@
     }
     shootNearbyCreature(){
       for(const group of [herbs,preds,omnis,bodyguards,nests]) for(let i=group.length-1;i>=0;i--){
-        const victim=group[i]; if(victim===this || victim.owner===this || victim.dead) continue;
+        const victim=group[i]; if(areTeammates(this,victim) || victim.dead) continue;
         if(dist2(this,victim)<165*165){ victim.hp-=2+Math.floor(this.level/3); this.attackCool=.95; burst(victim.x,victim.y,'hit');
           ctx.strokeStyle='rgba(255,227,107,.24)'; ctx.beginPath(); ctx.moveTo(this.x,this.y); ctx.lineTo(victim.x,victim.y); ctx.stroke();
           if(victim.hp<=0){ this.consumeCreature(victim,70,1); victim.dead=true; burst(victim.x,victim.y,victim.type || 'guard'); group.splice(i,1); }
@@ -358,7 +359,7 @@
       const groups=[herbs,preds,omnis,bodyguards,nests];
       for(const group of groups){
         for(let i=group.length-1;i>=0;i--){
-          const victim=group[i]; if(victim===this || victim.owner===this || victim.dead) continue;
+          const victim=group[i]; if(areTeammates(this,victim) || victim.dead) continue;
           if(dist2(this,victim)<(this.r+victim.r+4)**2){
             const damage=Math.max(1,Math.round(power*(this.level>=3?2:1)));
             victim.hp-=damage; this.attackCool=feeding?.62:.72; burst(victim.x,victim.y,'hit');
@@ -403,7 +404,7 @@
       this.vx=(home.x-this.x)*2.8; this.vy=(home.y-this.y)*2.8; this.x+=this.vx*dt; this.y+=this.vy*dt;
       this.x=clamp(this.x,this.r,W-this.r); this.y=clamp(this.y,this.r,H-this.r);
       if(this.attackCool<=0){
-        for(const group of [herbs,preds,omnis,bodyguards,nests]) for(let i=group.length-1;i>=0;i--){ const victim=group[i]; if(victim===this || victim===this.owner || victim.owner===this.owner || victim.dead) continue;
+        for(const group of [herbs,preds,omnis,bodyguards,nests]) for(let i=group.length-1;i>=0;i--){ const victim=group[i]; if(areTeammates(this,victim) || victim.dead) continue;
           if(dist2(this,victim)<56*56 || dist2(this.owner,victim)<72*72){ victim.hp-=1; this.attackCool=.8; burst(victim.x,victim.y,'hit'); if(victim.hp<=0){ this.owner.money+=1; this.owner.consumeCreature(victim,55,1); victim.dead=true; burst(victim.x,victim.y,victim.type || 'guard'); group.splice(i,1);} return; }
         }
       }
@@ -461,6 +462,19 @@
     }
   }
 
+
+
+  function teamRoot(entity){
+    if(!entity) return null;
+    if(entity.type==='nest') return entity;
+    if(entity.nest) return entity.nest;
+    if(entity.owner) return teamRoot(entity.owner);
+    return entity;
+  }
+  function areTeammates(a,b){
+    if(!a || !b) return false;
+    return teamRoot(a)===teamRoot(b);
+  }
 
   function addPlant(x,y,soft=false){x=clamp(x,8,W-8); y=clamp(y,8,H-8); if(!soft || plants.every(p=>dist2(p,{x,y})>46)){plants.push(new Plant(x,y));}}
   function addCoin(x=rand(8,W-8),y=rand(8,H-8)){coins.push(new Coin(clamp(x,8,W-8),clamp(y,8,H-8)));}
