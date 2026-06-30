@@ -94,6 +94,8 @@
       this.hp=cfg.hp; this.maxHp=cfg.hp; this.attackCool=rand(.1,.8); this.trail=[]; this.hungerPulse=0; this.foodEaten=0;
       this.level=0; this.nextLevelFood=cfg.nextLevelFood; this.nextHpReward=cfg.nextHpReward;
       this.starveTime=0; this.starveLimit=rand(cfg.starveMin,cfg.starveMax);
+      this.lastTarget=null; this.lastTargetDistance=Infinity; this.stuckTimer=0; this.stuckTurn=0;
+      this.stuckX=this.x; this.stuckY=this.y; this.ignoredFood=[];
     }
     static config={
       herb:{energy:105,maxEnergy:185,r:5.8,hp:3,nextLevelFood:6,nextHpReward:2,starveMin:48,starveMax:68,speed:45,color:'139,211,255',fill:'#8bd3ff',level:'#dff5ff'},
@@ -105,13 +107,20 @@
       this.age+=dt; this.cool-=dt; this.attackCool-=dt; this.turn-=dt;
       this.updateStarvation(dt);
       if(this.dead) return;
+      this.cleanupIgnoredFood();
       const target=this.findTarget();
-      if(target){ const a=angleTo(this,target); this.dir += Math.atan2(Math.sin(a-this.dir),Math.cos(a-this.dir))*dt*(this.type==='pred'?4.1:3.5); }
+      if(target){
+        const a=angleTo(this,target);
+        const turnStep=Math.atan2(Math.sin(a-this.dir),Math.cos(a-this.dir))*dt*(this.type==='pred'?4.1:3.5);
+        this.stuckTurn+=Math.abs(turnStep);
+        this.dir += turnStep;
+      }
       else if(this.turn<=0){ this.turn=rand(.5,1.6); this.dir += rand(-1.4,1.4); }
       const sp=this.cfg.speed;
       this.vx += Math.cos(this.dir)*dt*sp; this.vy += Math.sin(this.dir)*dt*sp;
       this.vx*=Math.pow(.82,dt*8); this.vy*=Math.pow(.82,dt*8);
       this.x+=this.vx*dt*5; this.y+=this.vy*dt*5; this.wrap();
+      this.detectStuck(target,dt);
       this.eat(); this.fight(); this.trail.push({x:this.x,y:this.y,a:.45}); if(this.trail.length>12)this.trail.shift(); for(const t of this.trail)t.a-=dt*.7;
     }
     updateStarvation(dt){
@@ -122,22 +131,55 @@
       if(this.starveTime>=this.starveLimit) this.die();
     }
     preyList(){ return [...herbs,...preds,...omnis].filter(c=>c!==this && !c.dead); }
+    isAvailableFood(item){ return item && !item.dead && (plants.includes(item) || herbs.includes(item) || preds.includes(item) || omnis.includes(item)); }
+    cleanupIgnoredFood(){ this.ignoredFood=this.ignoredFood.filter(entry=>entry.until>time && this.isAvailableFood(entry.item)); }
+    isIgnoredFood(item){ return this.ignoredFood.some(entry=>entry.item===item && entry.until>time); }
+    ignoreFood(item){
+      if(!item || this.isIgnoredFood(item)) return;
+      this.ignoredFood.push({item,until:time+rand(5,9)});
+      if(this.ignoredFood.length>5) this.ignoredFood.shift();
+    }
+    detectStuck(target,dt){
+      if(!target){ this.resetStuckCheck(); return; }
+      if(target!==this.lastTarget){
+        this.lastTarget=target; this.lastTargetDistance=Math.sqrt(dist2(this,target)); this.resetStuckCheck(false); return;
+      }
+      this.stuckTimer+=dt;
+      const currentDistance=Math.sqrt(dist2(this,target));
+      const moved=Math.sqrt((this.x-this.stuckX)**2+(this.y-this.stuckY)**2);
+      const gotCloser=this.lastTargetDistance-currentDistance;
+      if(this.stuckTimer>=1.25){
+        const circlingWithoutProgress=this.stuckTurn>Math.PI*1.2 && gotCloser<4;
+        const barelyMoved=moved<this.r*1.8 && gotCloser<2;
+        if(circlingWithoutProgress || barelyMoved){
+          this.ignoreFood(target);
+          this.dir+=rand(Math.PI*.65,Math.PI*1.35);
+          this.turn=rand(.35,.8);
+        }
+        this.lastTargetDistance=currentDistance; this.resetStuckCheck(false);
+      }
+    }
+    resetStuckCheck(clearTarget=true){
+      this.stuckTimer=0; this.stuckTurn=0; this.stuckX=this.x; this.stuckY=this.y;
+      if(clearTarget){ this.lastTarget=null; this.lastTargetDistance=Infinity; }
+    }
     findTarget(){
       let best=null, bd=Infinity;
       const foodRange=this.type==='omni'?150:170;
       if(this.type!=='pred'){
-        for(const item of plants){ const d=dist2(this,item); if(d<foodRange*foodRange && d<bd){bd=d; best=item;} }
+        for(const item of plants){ if(this.isIgnoredFood(item)) continue; const d=dist2(this,item); if(d<foodRange*foodRange && d<bd){bd=d; best=item;} }
         if(best && (this.type==='herb' || this.energy<this.maxEnergy*.82)) return best;
       }
       const huntRange=this.type==='herb'?145:this.type==='omni'?205:230; bd=Infinity; best=null;
       for(const enemy of this.preyList()){
+        if(this.isIgnoredFood(enemy)) continue;
         const d=dist2(this,enemy);
         const sameTypePenalty=enemy.type===this.type?1.35:1;
         if(d*sameTypePenalty<huntRange*huntRange && d*sameTypePenalty<bd){bd=d*sameTypePenalty; best=enemy;}
       }
       return best || (this.type==='omni'?this.nearestPlant(foodRange):null);
     }
-    nearestPlant(range){ let best=null, bd=Infinity; for(const p of plants){ const d=dist2(this,p); if(d<range*range && d<bd){bd=d; best=p;} } return best; }
+    nearestPlant(range){ let best=null, bd=Infinity; for(const p of plants){ if(this.isIgnoredFood(p)) continue; const d=dist2(this,p); if(d<range*range && d<bd){bd=d; best=p;} } return best; }
     gainFood(amount=1){
       this.foodEaten+=amount;
       while(this.foodEaten>=this.nextLevelFood){
