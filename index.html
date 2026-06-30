@@ -153,7 +153,7 @@
       const sp=this.cfg.speed*healthSpeedFactor*(threat?1.32:escaping?1.42:1);
       this.vx += Math.cos(this.dir)*dt*sp; this.vy += Math.sin(this.dir)*dt*sp;
       this.vx*=Math.pow(.82,dt*8); this.vy*=Math.pow(.82,dt*8);
-      this.x+=this.vx*dt*5; this.y+=this.vy*dt*5; this.wrap();
+      this.x+=this.vx*dt*5; this.y+=this.vy*dt*5; this.keepInBounds();
       this.detectStuck(target,dt);
       this.collectCoins(); this.buyUpgrades(); this.eat(); this.fight(); this.trail.push({x:this.x,y:this.y,a:.45}); if(this.trail.length>12)this.trail.shift(); for(const t of this.trail)t.a-=dt*.7;
     }
@@ -332,7 +332,13 @@
       }
       return false;
     }
-    wrap(){ if(this.x<0)this.x+=W;if(this.x>W)this.x-=W;if(this.y<0)this.y+=H;if(this.y>H)this.y-=H; }
+    keepInBounds(){
+      const margin=this.r;
+      if(this.x<margin){ this.x=margin; this.vx=Math.abs(this.vx)*.45; this.dir=Math.PI-this.dir; }
+      else if(this.x>W-margin){ this.x=W-margin; this.vx=-Math.abs(this.vx)*.45; this.dir=Math.PI-this.dir; }
+      if(this.y<margin){ this.y=margin; this.vy=Math.abs(this.vy)*.45; this.dir=-this.dir; }
+      else if(this.y>H-margin){ this.y=H-margin; this.vy=-Math.abs(this.vy)*.45; this.dir=-this.dir; }
+    }
     die(){ this.dead=true; burst(this.x,this.y,'death'); if(Math.random()<.55) addPlant(this.x+rand(-10,10),this.y+rand(-10,10),true); }
     draw(){
       const color=this.cfg.color;
@@ -352,11 +358,12 @@
   }
 
   class Bodyguard{
-    constructor(owner){this.owner=owner; this.type='guard'; this.x=owner.x+rand(-18,18); this.y=owner.y+rand(-18,18); this.r=4.8; this.hp=5; this.maxHp=5; this.attackCool=rand(.1,.7); this.dead=false; this.slot=owner.bodyguards.length;}
+    constructor(owner){this.owner=owner; this.type='guard'; this.x=clamp(owner.x+rand(-18,18),4.8,W-4.8); this.y=clamp(owner.y+rand(-18,18),4.8,H-4.8); this.r=4.8; this.hp=5; this.maxHp=5; this.attackCool=rand(.1,.7); this.dead=false; this.slot=owner.bodyguards.length;}
     update(dt){
       this.attackCool-=dt; if(!this.owner || this.owner.dead){this.dead=true; return;}
       const angle=time*1.7+this.slot*Math.PI*2/5, home={x:this.owner.x+Math.cos(angle)*(22+this.owner.r), y:this.owner.y+Math.sin(angle)*(22+this.owner.r)};
       this.vx=(home.x-this.x)*2.8; this.vy=(home.y-this.y)*2.8; this.x+=this.vx*dt; this.y+=this.vy*dt;
+      this.x=clamp(this.x,this.r,W-this.r); this.y=clamp(this.y,this.r,H-this.r);
       if(this.attackCool<=0){
         for(const group of [herbs,preds,omnis,bodyguards]) for(let i=group.length-1;i>=0;i--){ const victim=group[i]; if(victim===this || victim===this.owner || victim.owner===this.owner || victim.dead) continue;
           if(dist2(this,victim)<56*56 || dist2(this.owner,victim)<72*72){ victim.hp-=1; this.attackCool=.8; burst(victim.x,victim.y,'hit'); if(victim.hp<=0){ this.owner.money+=1; this.owner.energy=clamp(this.owner.energy+55,0,this.owner.maxEnergy); this.owner.gainFood(1); victim.dead=true; burst(victim.x,victim.y,victim.type || 'guard'); group.splice(i,1);} return; }
