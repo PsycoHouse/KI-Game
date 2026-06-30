@@ -59,7 +59,7 @@
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
     <div class="hint">
-      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
+      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Bodyguards greifen Angreifer aktiv an, können selbst Schaden nehmen und sterben. Pistolen schießen auf Wesen und Bodyguards in Reichweite. Wenn ein Wesen mit Pistole oder Bodyguard tötet, zählt das wie Essen: Die Level-Leiste steigt und das Wesen heilt. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
       <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Veganer</span><span class="pill">Alt+Klick: Fleischfresser</span><span class="pill">Strg+Klick: Allesfresser</span>
     </div>
   </div>
@@ -159,7 +159,7 @@
       this.energy=clamp(this.energy-dt*this.maxEnergy/this.starveLimit,0,this.maxEnergy);
       if(this.starveTime>=this.starveLimit) this.die();
     }
-    preyList(){ return [...herbs,...preds,...omnis].filter(c=>c!==this && !c.dead); }
+    preyList(){ return [...herbs,...preds,...omnis,...bodyguards].filter(c=>c!==this && c.owner!==this && !c.dead); }
     isBadlyWounded(){ return this.hp/this.maxHp<=.38; }
     injurySpeedFactor(){
       const hpPct=clamp(this.hp/this.maxHp,0,1);
@@ -175,7 +175,7 @@
       }
       return closest;
     }
-    isAvailableFood(item){ return item && !item.dead && (plants.includes(item) || coins.includes(item) || herbs.includes(item) || preds.includes(item) || omnis.includes(item)); }
+    isAvailableFood(item){ return item && !item.dead && (plants.includes(item) || coins.includes(item) || herbs.includes(item) || preds.includes(item) || omnis.includes(item) || bodyguards.includes(item)); }
     cleanupIgnoredFood(){ this.ignoredFood=this.ignoredFood.filter(entry=>entry.until>time && this.isAvailableFood(entry.item)); }
     isIgnoredFood(item){ return this.ignoredFood.some(entry=>entry.item===item && entry.until>time); }
     ignoreFood(item){
@@ -285,26 +285,26 @@
       this.attackNearbyCreature(this.type==='herb'?.65:1, false);
     }
     shootNearbyCreature(){
-      for(const group of [herbs,preds,omnis]) for(let i=group.length-1;i>=0;i--){
-        const victim=group[i]; if(victim===this || victim.dead) continue;
+      for(const group of [herbs,preds,omnis,bodyguards]) for(let i=group.length-1;i>=0;i--){
+        const victim=group[i]; if(victim===this || victim.owner===this || victim.dead) continue;
         if(dist2(this,victim)<165*165){ victim.hp-=2+Math.floor(this.level/3); this.attackCool=.95; burst(victim.x,victim.y,'hit');
           ctx.strokeStyle='rgba(255,227,107,.24)'; ctx.beginPath(); ctx.moveTo(this.x,this.y); ctx.lineTo(victim.x,victim.y); ctx.stroke();
-          if(victim.hp<=0){ this.energy=clamp(this.energy+70,0,this.maxEnergy); this.gainFood(1); victim.dead=true; burst(victim.x,victim.y,victim.type); group.splice(i,1); }
+          if(victim.hp<=0){ this.energy=clamp(this.energy+70,0,this.maxEnergy); this.gainFood(1); victim.dead=true; burst(victim.x,victim.y,victim.type || 'guard'); group.splice(i,1); }
           return true;
         }
       }
       return false;
     }
     attackNearbyCreature(power, feeding){
-      const groups=[herbs,preds,omnis];
+      const groups=[herbs,preds,omnis,bodyguards];
       for(const group of groups){
         for(let i=group.length-1;i>=0;i--){
-          const victim=group[i]; if(victim===this || victim.dead) continue;
+          const victim=group[i]; if(victim===this || victim.owner===this || victim.dead) continue;
           if(dist2(this,victim)<(this.r+victim.r+4)**2){
             const damage=Math.max(1,Math.round(power*(this.level>=3?2:1)));
             victim.hp-=damage; this.attackCool=feeding?.62:.72; burst(victim.x,victim.y,'hit');
             this.vx-=Math.cos(this.dir)*14; this.vy-=Math.sin(this.dir)*14;
-            if(victim.hp<=0){ this.energy=clamp(this.energy+(this.type==='omni'?55:80),0,this.maxEnergy); this.gainFood(this.type==='omni'?1.25:1); victim.dead=true; burst(victim.x,victim.y,victim.type); group.splice(i,1); }
+            if(victim.hp<=0){ this.energy=clamp(this.energy+(this.type==='omni'?55:80),0,this.maxEnergy); this.gainFood(this.type==='omni'?1.25:1); victim.dead=true; burst(victim.x,victim.y,victim.type || 'guard'); group.splice(i,1); }
             return true;
           }
         }
@@ -331,18 +331,18 @@
   }
 
   class Bodyguard{
-    constructor(owner){this.owner=owner; this.x=owner.x+rand(-18,18); this.y=owner.y+rand(-18,18); this.r=4.8; this.hp=5; this.maxHp=5; this.attackCool=rand(.1,.7); this.dead=false; this.slot=owner.bodyguards.length;}
+    constructor(owner){this.owner=owner; this.type='guard'; this.x=owner.x+rand(-18,18); this.y=owner.y+rand(-18,18); this.r=4.8; this.hp=5; this.maxHp=5; this.attackCool=rand(.1,.7); this.dead=false; this.slot=owner.bodyguards.length;}
     update(dt){
       this.attackCool-=dt; if(!this.owner || this.owner.dead){this.dead=true; return;}
       const angle=time*1.7+this.slot*Math.PI*2/5, home={x:this.owner.x+Math.cos(angle)*(22+this.owner.r), y:this.owner.y+Math.sin(angle)*(22+this.owner.r)};
       this.vx=(home.x-this.x)*2.8; this.vy=(home.y-this.y)*2.8; this.x+=this.vx*dt; this.y+=this.vy*dt;
       if(this.attackCool<=0){
-        for(const group of [herbs,preds,omnis]) for(let i=group.length-1;i>=0;i--){ const victim=group[i]; if(victim===this.owner || victim.dead) continue;
-          if(dist2(this,victim)<56*56 || dist2(this.owner,victim)<72*72){ victim.hp-=1; this.attackCool=.8; burst(victim.x,victim.y,'hit'); if(victim.hp<=0){ this.owner.money+=1; this.owner.gainFood(.6); victim.dead=true; burst(victim.x,victim.y,victim.type); group.splice(i,1);} return; }
+        for(const group of [herbs,preds,omnis,bodyguards]) for(let i=group.length-1;i>=0;i--){ const victim=group[i]; if(victim===this || victim===this.owner || victim.owner===this.owner || victim.dead) continue;
+          if(dist2(this,victim)<56*56 || dist2(this.owner,victim)<72*72){ victim.hp-=1; this.attackCool=.8; burst(victim.x,victim.y,'hit'); if(victim.hp<=0){ this.owner.money+=1; this.owner.energy=clamp(this.owner.energy+55,0,this.owner.maxEnergy); this.owner.gainFood(1); victim.dead=true; burst(victim.x,victim.y,victim.type || 'guard'); group.splice(i,1);} return; }
         }
       }
     }
-    draw(){ ctx.fillStyle='rgba(248,243,255,.22)'; ctx.beginPath(); ctx.arc(this.x,this.y,this.r*3.5,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#f8f3ff'; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); ctx.strokeStyle=this.owner.cfg.fill; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(this.x,this.y,this.r+2,0,Math.PI*2); ctx.stroke(); }
+    draw(){ ctx.fillStyle='rgba(248,243,255,.22)'; ctx.beginPath(); ctx.arc(this.x,this.y,this.r*3.5,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#f8f3ff'; ctx.beginPath(); ctx.arc(this.x,this.y,this.r,0,Math.PI*2); ctx.fill(); ctx.strokeStyle=this.owner.cfg.fill; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(this.x,this.y,this.r+2,0,Math.PI*2); ctx.stroke(); const barW=this.r*2.5, pct=clamp(this.hp/this.maxHp,0,1); ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(this.x-barW/2,this.y+this.r+4,barW,2); ctx.fillStyle='#f8f3ff'; ctx.fillRect(this.x-barW/2,this.y+this.r+4,barW*pct,2); }
   }
 
 
