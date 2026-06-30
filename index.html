@@ -56,7 +56,7 @@
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
     <div class="hint">
-      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
+      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
       <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Veganer</span><span class="pill">Alt+Klick: Fleischfresser</span><span class="pill">Strg+Klick: Allesfresser</span>
     </div>
   </div>
@@ -108,15 +108,22 @@
       this.updateStarvation(dt);
       if(this.dead) return;
       this.cleanupIgnoredFood();
-      const target=this.findTarget();
-      if(target){
+      const threat=this.findThreat();
+      const target=threat?null:this.findTarget();
+      if(threat){
+        const a=angleTo(threat,this);
+        const turnStep=Math.atan2(Math.sin(a-this.dir),Math.cos(a-this.dir))*dt*5.2;
+        this.dir += turnStep;
+        this.resetStuckCheck();
+      }
+      else if(target){
         const a=angleTo(this,target);
         const turnStep=Math.atan2(Math.sin(a-this.dir),Math.cos(a-this.dir))*dt*(this.type==='pred'?4.1:3.5);
         this.stuckTurn+=Math.abs(turnStep);
         this.dir += turnStep;
       }
       else if(this.turn<=0){ this.turn=rand(.5,1.6); this.dir += rand(-1.4,1.4); }
-      const sp=this.cfg.speed;
+      const sp=this.cfg.speed*(threat?1.32:1);
       this.vx += Math.cos(this.dir)*dt*sp; this.vy += Math.sin(this.dir)*dt*sp;
       this.vx*=Math.pow(.82,dt*8); this.vy*=Math.pow(.82,dt*8);
       this.x+=this.vx*dt*5; this.y+=this.vy*dt*5; this.wrap();
@@ -131,6 +138,17 @@
       if(this.starveTime>=this.starveLimit) this.die();
     }
     preyList(){ return [...herbs,...preds,...omnis].filter(c=>c!==this && !c.dead); }
+    isBadlyWounded(){ return this.hp/this.maxHp<=.38; }
+    findThreat(){
+      if(!this.isBadlyWounded()) return null;
+      const fleeRange=(this.type==='pred'?190:170)+this.level*6;
+      let closest=null, closestDistance=Infinity;
+      for(const enemy of this.preyList()){
+        const d=dist2(this,enemy);
+        if(d<closestDistance && d<fleeRange*fleeRange){ closestDistance=d; closest=enemy; }
+      }
+      return closest;
+    }
     isAvailableFood(item){ return item && !item.dead && (plants.includes(item) || herbs.includes(item) || preds.includes(item) || omnis.includes(item)); }
     cleanupIgnoredFood(){ this.ignoredFood=this.ignoredFood.filter(entry=>entry.until>time && this.isAvailableFood(entry.item)); }
     isIgnoredFood(item){ return this.ignoredFood.some(entry=>entry.item===item && entry.until>time); }
@@ -204,7 +222,7 @@
       this.attackNearbyCreature(1, true);
     }
     fight(){
-      if(this.attackCool>0) return;
+      if(this.attackCool>0 || this.findThreat()) return;
       if(this.type==='herb' && this.nearestPlant(115)) return;
       this.attackNearbyCreature(this.type==='herb'?.65:1, false);
     }
