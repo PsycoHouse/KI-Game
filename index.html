@@ -59,7 +59,7 @@
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
     <div class="hint">
-      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Bodyguards greifen Angreifer aktiv an, können selbst Schaden nehmen und sterben. Pistolen schießen auf Wesen und Bodyguards in Reichweite. Wenn ein Wesen mit Pistole oder Bodyguard tötet, zählt das wie Essen: Die Level-Leiste steigt und das Wesen heilt. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Wenn ein Wesen länger als 10 Sekunden ohne Fortschritt um ein Ziel kreist, bricht es aus und rennt 1 Sekunde in eine zufällige Himmelsrichtung. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Wenn Fleischfresser ihresgleichen auffressen, steigen sie sofort eine komplette Stufe auf. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
+      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Bodyguards greifen Angreifer aktiv an, können selbst Schaden nehmen und sterben. Pistolen schießen auf Wesen und Bodyguards in Reichweite. Wenn ein Wesen mit Pistole oder Bodyguard tötet, zählt das wie Essen: Die Level-Leiste steigt und das Wesen heilt. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Wenn ein Wesen länger als 10 Sekunden ohne Fortschritt um ein Ziel kreist, bricht es aus und rennt 1 Sekunde in eine zufällige Himmelsrichtung. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Wenn Fleischfresser ihresgleichen auffressen, steigen sie sofort eine komplette Stufe auf. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum. Ab Level 7 wird ein Individuum zum stationären Nest mit 100 HP. Das Nest gründet ein Volk mit maximal 10 Dienern auf Level 3: bis zu 8 Verteidiger bleiben beim Nest, bis zu 2 Jäger suchen Gegner und sammeln Gold. Es gibt immer mindestens einen Jäger; bleiben nur Diener ohne Jäger übrig, wird automatisch ein Verteidiger zum Jäger. Jäger finanzieren neue Diener für je 3 Gold.<br>
       <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Veganer</span><span class="pill">Alt+Klick: Fleischfresser</span><span class="pill">Strg+Klick: Allesfresser</span>
     </div>
   </div>
@@ -67,7 +67,7 @@
     <h2>🏆 Highscore Top 5</h2>
     <div class="scoreRows" id="scoreRows"></div>
   </aside>
-  <div class="legend"><div><span class="dot d1"></span>Pflanze</div><div><span class="dot d6"></span>Goldmünze: Geld für alle</div><div><span class="dot d7"></span>Bodyguard: 5 Münzen, max. 5</div><div><span class="dot d2"></span>Veganer: Pflanzen + Verteidigung gegen alle</div><div><span class="dot d3"></span>Fleischfresser: jagt andere Wesen</div><div><span class="dot d4"></span>Allesfresser: Pflanzen und Jagd</div></div>
+  <div class="legend"><div><span class="dot d1"></span>Pflanze</div><div><span class="dot d6"></span>Goldmünze: Geld für alle</div><div><span class="dot d7"></span>Bodyguard: 5 Münzen, max. 5</div><div><span class="dot d5"></span>Nest ab Level 7: 100 HP, max. 10 Diener</div><div><span class="dot d2"></span>Veganer: Pflanzen + Verteidigung gegen alle</div><div><span class="dot d3"></span>Fleischfresser: jagt andere Wesen</div><div><span class="dot d4"></span>Allesfresser: Pflanzen und Jagd</div></div>
 <script>
 (() => {
   const canvas = document.getElementById('c');
@@ -77,7 +77,7 @@
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const dist2=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy};
   const angleTo=(a,b)=>Math.atan2(b.y-a.y,b.x-a.x);
-  const plants=[]; const coins=[]; const herbs=[]; const preds=[]; const omnis=[]; const queens=[]; const bodyguards=[]; const particles=[];
+  const plants=[]; const coins=[]; const herbs=[]; const preds=[]; const omnis=[]; const nests=[]; const bodyguards=[]; const particles=[];
   let paused=false, speed=1, plantRate=.82, time=0, last=performance.now(), nextCreatureId=1;
 
   class Plant{
@@ -113,6 +113,7 @@
       this.energy=cfg.energy; this.maxEnergy=cfg.maxEnergy; this.baseR=cfg.r; this.r=cfg.r; this.dead=false; this.turn=0;
       this.hp=cfg.hp; this.maxHp=cfg.hp; this.attackCool=rand(.1,.8); this.trail=[]; this.hungerPulse=0; this.foodEaten=0;
       this.id=nextCreatureId++; this.name=(type==='herb'?'Veganer':type==='pred'?'Jäger':'Allesfresser')+' #'+this.id; this.money=0; this.bodyguards=[]; this.hasPistol=false;
+      this.nest=null; this.nestRole=null;
       this.level=0; this.nextLevelFood=cfg.nextLevelFood; this.nextHpReward=cfg.nextHpReward;
       this.starveTime=0; this.starveLimit=rand(cfg.starveMin,cfg.starveMax);
       this.lastTarget=null; this.lastTargetDistance=Infinity; this.stuckTimer=0; this.stuckTurn=0;
@@ -164,7 +165,7 @@
       this.energy=clamp(this.energy-dt*this.maxEnergy/this.starveLimit,0,this.maxEnergy);
       if(this.starveTime>=this.starveLimit) this.die();
     }
-    preyList(){ return [...herbs,...preds,...omnis,...bodyguards].filter(c=>c!==this && c.owner!==this && !c.dead); }
+    preyList(){ return [...herbs,...preds,...omnis,...bodyguards,...nests].filter(c=>c!==this && c!==this.nest && c.owner!==this && c.nest!==this.nest && !c.dead); }
     isBadlyWounded(){ return this.hp/this.maxHp<=.38; }
     injurySpeedFactor(){
       const hpPct=clamp(this.hp/this.maxHp,0,1);
@@ -229,6 +230,7 @@
       if(clearTarget){ this.lastTarget=null; this.lastTargetDistance=Infinity; this.targetTroubleTime=0; }
     }
     findTarget(){
+      if(this.nestRole==='defender') return this.findNestDefenseTarget();
       const foodRange=this.type==='omni'?150:170;
       const hunger=1-clamp(this.energy/this.maxEnergy,0,1);
       let bestFood=null, bestFoodDistance=Infinity;
@@ -253,10 +255,22 @@
       if(coin) return coin;
       return bestFood || (this.type==='omni'?this.nearestPlant(foodRange):null);
     }
+    findNestDefenseTarget(){
+      if(!this.nest || this.nest.dead) return null;
+      let best=null, bd=Infinity;
+      for(const enemy of this.preyList()){
+        const dn=dist2(this.nest,enemy), ds=dist2(this,enemy);
+        if(dn<150*150 && ds<bd){bd=ds; best=enemy;}
+      }
+      if(best) return best;
+      const angle=(this.nest.servants.indexOf(this)+1)*Math.PI*2/Math.max(1,this.nest.servants.length)+time*.35;
+      return {x:this.nest.x+Math.cos(angle)*58,y:this.nest.y+Math.sin(angle)*58,home:true};
+    }
     findCoinTarget(hunger){
-      if(this.money>=10 && this.hasPistol && this.bodyguards.length>=5) return null;
-      const desire=this.hasPistol?Math.max(0,5-this.bodyguards.length)/5:this.money<5?1:.55;
-      const range=clamp(52+desire*58-hunger*42+this.level*2,34,118);
+      if(this.nestRole==='defender') return null;
+      if(!this.nest && this.money>=10 && this.hasPistol && this.bodyguards.length>=5) return null;
+      const desire=this.nestRole==='hunter'?1:(this.hasPistol?Math.max(0,5-this.bodyguards.length)/5:this.money<5?1:.55);
+      const range=this.nestRole==='hunter'?185:clamp(52+desire*58-hunger*42+this.level*2,34,118);
       let best=null, bd=Infinity;
       for(const coin of coins){
         if(this.isIgnoredFood(coin)) continue;
@@ -268,10 +282,11 @@
     nearestPlant(range){ let best=null, bd=Infinity; for(const p of plants){ if(this.isIgnoredFood(p)) continue; const d=dist2(this,p); if(d<range*range && d<bd){bd=d; best=p;} } return best; }
     collectCoins(){
       for(let i=coins.length-1;i>=0;i--) if(dist2(this,coins[i])<(this.r+coins[i].r+5)**2){
-        this.money+=coins[i].value; burst(coins[i].x,coins[i].y,'coin'); coins.splice(i,1);
+        if(this.nest){ this.nest.money+=coins[i].value; } else this.money+=coins[i].value; burst(coins[i].x,coins[i].y,'coin'); coins.splice(i,1);
       }
     }
     buyUpgrades(){
+      if(this.nest) return;
       if(this.bodyguards.length===0 && this.money>=5){ this.money-=5; addBodyguard(this); }
       if(!this.hasPistol && this.money>=10){ this.money-=10; this.hasPistol=true; burst(this.x,this.y,'coin'); }
       while(this.hasPistol && this.money>=5 && this.bodyguards.length<5){ this.money-=5; addBodyguard(this); }
@@ -281,10 +296,25 @@
     }
     gainLevel(){
       this.level++;
+      if(this.level>=7 && !this.nest){ this.becomeNest(); return; }
       this.maxHp+=this.nextHpReward; this.hp=this.maxHp;
       this.r=this.baseR*(1+this.level*.12); this.maxEnergy+=6;
       this.nextLevelFood=Math.ceil(this.nextLevelFood*1.65); this.nextHpReward=Math.ceil(this.nextHpReward*1.55);
       burst(this.x,this.y,this.type);
+    }
+    setLevelDirect(level){
+      this.level=0;
+      this.nextLevelFood=this.cfg.nextLevelFood; this.nextHpReward=this.cfg.nextHpReward;
+      for(let i=0;i<level;i++){
+        this.level++; this.maxHp+=this.nextHpReward; this.nextLevelFood=Math.ceil(this.nextLevelFood*1.65); this.nextHpReward=Math.ceil(this.nextHpReward*1.55);
+      }
+      this.hp=this.maxHp; this.r=this.baseR*(1+this.level*.12); this.maxEnergy+=6*level; this.energy=this.maxEnergy*.85;
+    }
+    becomeNest(){
+      this.dead=true;
+      addNest(this.x,this.y,this.type,this.name);
+      for(const guard of this.bodyguards) guard.dead=true;
+      burst(this.x,this.y,'nest');
     }
     gainFood(amount=1){
       this.healFromFood();
@@ -314,7 +344,7 @@
       this.attackNearbyCreature(this.type==='herb'?.65:1, false);
     }
     shootNearbyCreature(){
-      for(const group of [herbs,preds,omnis,bodyguards]) for(let i=group.length-1;i>=0;i--){
+      for(const group of [herbs,preds,omnis,bodyguards,nests]) for(let i=group.length-1;i>=0;i--){
         const victim=group[i]; if(victim===this || victim.owner===this || victim.dead) continue;
         if(dist2(this,victim)<165*165){ victim.hp-=2+Math.floor(this.level/3); this.attackCool=.95; burst(victim.x,victim.y,'hit');
           ctx.strokeStyle='rgba(255,227,107,.24)'; ctx.beginPath(); ctx.moveTo(this.x,this.y); ctx.lineTo(victim.x,victim.y); ctx.stroke();
@@ -325,7 +355,7 @@
       return false;
     }
     attackNearbyCreature(power, feeding){
-      const groups=[herbs,preds,omnis,bodyguards];
+      const groups=[herbs,preds,omnis,bodyguards,nests];
       for(const group of groups){
         for(let i=group.length-1;i>=0;i--){
           const victim=group[i]; if(victim===this || victim.owner===this || victim.dead) continue;
@@ -347,7 +377,7 @@
       if(this.y<margin){ this.y=margin; this.vy=Math.abs(this.vy)*.45; this.dir=-this.dir; }
       else if(this.y>H-margin){ this.y=H-margin; this.vy=-Math.abs(this.vy)*.45; this.dir=-this.dir; }
     }
-    die(){ this.dead=true; burst(this.x,this.y,'death'); if(Math.random()<.55) addPlant(this.x+rand(-10,10),this.y+rand(-10,10),true); }
+    die(){ this.dead=true; if(this.nest) this.nest.forgetServant(this); burst(this.x,this.y,'death'); if(Math.random()<.55) addPlant(this.x+rand(-10,10),this.y+rand(-10,10),true); }
     draw(){
       const color=this.cfg.color;
       for(const t of this.trail){ if(t.a<=0)continue; ctx.fillStyle=`rgba(${color},${t.a*.18})`; ctx.beginPath(); ctx.arc(t.x,t.y,this.r*1.5,0,Math.PI*2); ctx.fill(); }
@@ -373,7 +403,7 @@
       this.vx=(home.x-this.x)*2.8; this.vy=(home.y-this.y)*2.8; this.x+=this.vx*dt; this.y+=this.vy*dt;
       this.x=clamp(this.x,this.r,W-this.r); this.y=clamp(this.y,this.r,H-this.r);
       if(this.attackCool<=0){
-        for(const group of [herbs,preds,omnis,bodyguards]) for(let i=group.length-1;i>=0;i--){ const victim=group[i]; if(victim===this || victim===this.owner || victim.owner===this.owner || victim.dead) continue;
+        for(const group of [herbs,preds,omnis,bodyguards,nests]) for(let i=group.length-1;i>=0;i--){ const victim=group[i]; if(victim===this || victim===this.owner || victim.owner===this.owner || victim.dead) continue;
           if(dist2(this,victim)<56*56 || dist2(this.owner,victim)<72*72){ victim.hp-=1; this.attackCool=.8; burst(victim.x,victim.y,'hit'); if(victim.hp<=0){ this.owner.money+=1; this.owner.consumeCreature(victim,55,1); victim.dead=true; burst(victim.x,victim.y,victim.type || 'guard'); group.splice(i,1);} return; }
         }
       }
@@ -382,20 +412,37 @@
   }
 
 
-  class Queen{
-    constructor(x,y){
-      this.x=x; this.y=y; this.r=24; this.hp=1000; this.maxHp=1000; this.spawnTimer=1; this.pulse=0; this.dead=false;
+  class Nest{
+    constructor(x,y,type,founderName){
+      this.x=x; this.y=y; this.type='nest'; this.founderType=type; this.name='Nest von '+founderName; this.r=24; this.hp=100; this.maxHp=100; this.spawnTimer=.8; this.pulse=0; this.dead=false; this.money=0; this.servants=[];
     }
     update(dt){
       this.spawnTimer-=dt; this.pulse+=dt;
+      this.servants=this.servants.filter(s=>!s.dead);
+      this.ensureHunter();
       if(this.spawnTimer<=0){
-        this.spawnTimer+=1;
-        const a=rand(0,Math.PI*2), d=rand(this.r+12,this.r+30);
-        const child=new Creature(this.x+Math.cos(a)*d,this.y+Math.sin(a)*d,'pred');
-        child.energy=child.maxEnergy*.8; child.cool=rand(4,8);
-        preds.push(child);
-        burst(child.x,child.y,'queen');
+        this.spawnTimer+=1.4;
+        if(this.servants.length<10) this.spawnServant(this.servants.filter(s=>s.nestRole==='hunter').length<2?'hunter':'defender');
       }
+      while(this.money>=3 && this.servants.length<10){ this.money-=3; this.spawnServant(this.servants.filter(s=>s.nestRole==='hunter').length<2?'hunter':'defender'); }
+    }
+    ensureHunter(){
+      const living=this.servants.filter(s=>!s.dead);
+      if(living.length>0 && !living.some(s=>s.nestRole==='hunter')) living[0].nestRole='hunter';
+      if(living.length===1) living[0].nestRole='hunter';
+    }
+    forgetServant(servant){ this.servants=this.servants.filter(s=>s!==servant); this.ensureHunter(); }
+    spawnServant(role='defender'){
+      if(this.servants.length>=10 || this.dead) return;
+      const hunters=this.servants.filter(s=>s.nestRole==='hunter').length;
+      if(role==='hunter' && hunters>=2) role='defender';
+      if(role==='defender' && this.servants.length-hunters>=8) role='hunter';
+      const a=rand(0,Math.PI*2), d=rand(this.r+12,this.r+30);
+      const child=new Creature(this.x+Math.cos(a)*d,this.y+Math.sin(a)*d,this.founderType);
+      child.nest=this; child.nestRole=role; child.name=(role==='hunter'?'Jäger':'Verteidiger')+' des '+this.name; child.setLevelDirect(3); child.cool=rand(4,8);
+      (child.type==='herb'?herbs:child.type==='pred'?preds:omnis).push(child);
+      this.servants.push(child);
+      burst(child.x,child.y,'nest');
     }
     draw(){
       const glow=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r*4.8);
@@ -418,11 +465,11 @@
   function addPlant(x,y,soft=false){x=clamp(x,8,W-8); y=clamp(y,8,H-8); if(!soft || plants.every(p=>dist2(p,{x,y})>46)){plants.push(new Plant(x,y));}}
   function addCoin(x=rand(8,W-8),y=rand(8,H-8)){coins.push(new Coin(clamp(x,8,W-8),clamp(y,8,H-8)));}
   function addCreature(type,x=rand(30,W-30),y=rand(30,H-30)){(type==='herb'?herbs:type==='pred'?preds:omnis).push(new Creature(x,y,type));}
-  function addQueen(x=rand(60,W-60),y=rand(60,H-60)){queens.push(new Queen(clamp(x,30,W-30),clamp(y,30,H-30)));}
+  function addNest(x=rand(60,W-60),y=rand(60,H-60),type='pred',founderName='Unbekannt'){nests.push(new Nest(clamp(x,30,W-30),clamp(y,30,H-30),type,founderName));}
   function addBodyguard(owner){ const guard=new Bodyguard(owner); owner.bodyguards.push(guard); bodyguards.push(guard); burst(owner.x,owner.y,'coin'); }
-  function burst(x,y,type){ const color= type==='plant'?'107,255,124':type==='herb'?'139,211,255':type==='queen'?'211,107,255':type==='omni'?'255,179,71':type==='death'?'255,227,107':type==='coin'?'255,227,107':type==='hit'?'255,255,255':'255,107,107'; for(let i=0;i<12;i++)particles.push({x,y,vx:rand(-1,1)*rand(20,70),vy:rand(-1,1)*rand(20,70),a:1,r:rand(1,3),color}); }
+  function burst(x,y,type){ const color= type==='plant'?'107,255,124':type==='herb'?'139,211,255':(type==='queen'||type==='nest')?'211,107,255':type==='omni'?'255,179,71':type==='death'?'255,227,107':type==='coin'?'255,227,107':type==='hit'?'255,255,255':'255,107,107'; for(let i=0;i<12;i++)particles.push({x,y,vx:rand(-1,1)*rand(20,70),vy:rand(-1,1)*rand(20,70),a:1,r:rand(1,3),color}); }
 
-  function reset(){ plants.length=coins.length=herbs.length=preds.length=omnis.length=queens.length=bodyguards.length=particles.length=0; nextCreatureId=1; for(let i=0;i<420;i++) addPlant(rand(20,W-20),rand(20,H-20)); for(let i=0;i<55;i++) addCoin(); for(let i=0;i<50;i++) addCreature('herb'); for(let i=0;i<50;i++) addCreature('pred'); for(let i=0;i<50;i++) addCreature('omni'); }
+  function reset(){ plants.length=coins.length=herbs.length=preds.length=omnis.length=nests.length=bodyguards.length=particles.length=0; nextCreatureId=1; for(let i=0;i<420;i++) addPlant(rand(20,W-20),rand(20,H-20)); for(let i=0;i<55;i++) addCoin(); for(let i=0;i<50;i++) addCreature('herb'); for(let i=0;i<50;i++) addCreature('pred'); for(let i=0;i<50;i++) addCreature('omni'); }
   function resize(){DPR=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);}
   addEventListener('resize',()=>{resize(); if(plants.length===0)reset();}); resize(); reset();
 
@@ -431,9 +478,9 @@
     const spawnChance=plantRate*dt*18;
     if(plants.length<1100 && Math.random()<spawnChance) addPlant(rand(8,W-8),rand(8,H-8),true);
     if(coins.length<180 && Math.random()<dt*5.5) addCoin();
-    plants.forEach(p=>p.update(dt)); coins.forEach(c=>c.update(dt)); herbs.forEach(h=>h.update(dt)); preds.forEach(p=>p.update(dt)); omnis.forEach(o=>o.update(dt)); bodyguards.forEach(b=>b.update(dt)); queens.forEach(q=>q.update(dt));
+    plants.forEach(p=>p.update(dt)); coins.forEach(c=>c.update(dt)); herbs.forEach(h=>h.update(dt)); preds.forEach(p=>p.update(dt)); omnis.forEach(o=>o.update(dt)); bodyguards.forEach(b=>b.update(dt)); nests.forEach(q=>q.update(dt));
     for(let i=bodyguards.length-1;i>=0;i--) if(bodyguards[i].dead) bodyguards.splice(i,1); for(const c of [...herbs,...preds,...omnis]) c.bodyguards=c.bodyguards.filter(b=>!b.dead);
-    for(let i=herbs.length-1;i>=0;i--) if(herbs[i].dead) herbs.splice(i,1); for(let i=preds.length-1;i>=0;i--) if(preds[i].dead) preds.splice(i,1); for(let i=omnis.length-1;i>=0;i--) if(omnis[i].dead) omnis.splice(i,1); for(let i=queens.length-1;i>=0;i--) if(queens[i].dead) queens.splice(i,1);
+    for(let i=herbs.length-1;i>=0;i--) if(herbs[i].dead) herbs.splice(i,1); for(let i=preds.length-1;i>=0;i--) if(preds[i].dead) preds.splice(i,1); for(let i=omnis.length-1;i>=0;i--) if(omnis[i].dead) omnis.splice(i,1); for(let i=nests.length-1;i>=0;i--) if(nests[i].dead) nests.splice(i,1);
     for(let i=particles.length-1;i>=0;i--){const p=particles[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=Math.pow(.86,dt*10); p.vy*=Math.pow(.86,dt*10); p.a-=dt*1.7; if(p.a<=0)particles.splice(i,1)}
     if(herbs.length===0 && plants.length>30) for(let i=0;i<3;i++) addCreature('herb');
     if(preds.length===0 && herbs.length+omnis.length>25) addCreature('pred');
@@ -453,7 +500,7 @@
     for(const h of herbs){ const t=h.findTarget(); if(t){ctx.strokeStyle='rgba(139,211,255,.08)'; ctx.beginPath(); ctx.moveTo(h.x,h.y); ctx.lineTo(t.x,t.y); ctx.stroke();}}
     for(const p of preds){ const t=p.findTarget(); if(t){ctx.strokeStyle='rgba(255,107,107,.09)'; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(t.x,t.y); ctx.stroke();}}
     for(const o of omnis){ const t=o.findTarget(); if(t){ctx.strokeStyle='rgba(255,179,71,.08)'; ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(t.x,t.y); ctx.stroke();}}
-    herbs.forEach(h=>h.draw()); preds.forEach(p=>p.draw()); omnis.forEach(o=>o.draw()); bodyguards.forEach(b=>b.draw()); queens.forEach(q=>q.draw());
+    herbs.forEach(h=>h.draw()); preds.forEach(p=>p.draw()); omnis.forEach(o=>o.draw()); bodyguards.forEach(b=>b.draw()); nests.forEach(q=>q.draw());
     for(const p of particles){ctx.fillStyle=`rgba(${p.color},${p.a})`; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();}
     // vignette
     const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.2,W/2,H/2,Math.max(W,H)*.7); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.45)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
