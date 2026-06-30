@@ -56,7 +56,7 @@
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
     <div class="hint">
-      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste, Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
+      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
       <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Veganer</span><span class="pill">Alt+Klick: Fleischfresser</span><span class="pill">Strg+Klick: Allesfresser</span>
     </div>
   </div>
@@ -98,9 +98,9 @@
       this.stuckX=this.x; this.stuckY=this.y; this.ignoredFood=[];
     }
     static config={
-      herb:{energy:105,maxEnergy:185,r:5.8,hp:3,nextLevelFood:6,nextHpReward:2,starveMin:48,starveMax:68,speed:45,color:'139,211,255',fill:'#8bd3ff',level:'#dff5ff'},
-      pred:{energy:125,maxEnergy:220,r:7.2,hp:7,nextLevelFood:9,nextHpReward:4,starveMin:54,starveMax:74,speed:50,color:'255,107,107',fill:'#ff6b6b',level:'#ffe36b'},
-      omni:{energy:115,maxEnergy:205,r:6.6,hp:5,nextLevelFood:8,nextHpReward:3,starveMin:50,starveMax:70,speed:47,color:'255,179,71',fill:'#ffb347',level:'#fff0b8'}
+      herb:{energy:105,maxEnergy:185,r:5.8,hp:3,healRate:.25,nextLevelFood:6,nextHpReward:2,starveMin:48,starveMax:68,speed:45,color:'139,211,255',fill:'#8bd3ff',level:'#dff5ff'},
+      pred:{energy:125,maxEnergy:220,r:7.2,hp:7,healRate:1,nextLevelFood:9,nextHpReward:4,starveMin:54,starveMax:74,speed:50,color:'255,107,107',fill:'#ff6b6b',level:'#ffe36b'},
+      omni:{energy:115,maxEnergy:205,r:6.6,hp:5,healRate:.5,nextLevelFood:8,nextHpReward:3,starveMin:50,starveMax:70,speed:47,color:'255,179,71',fill:'#ffb347',level:'#fff0b8'}
     };
     get cfg(){return Creature.config[this.type];}
     update(dt){
@@ -180,7 +180,11 @@
       return best || (this.type==='omni'?this.nearestPlant(foodRange):null);
     }
     nearestPlant(range){ let best=null, bd=Infinity; for(const p of plants){ if(this.isIgnoredFood(p)) continue; const d=dist2(this,p); if(d<range*range && d<bd){bd=d; best=p;} } return best; }
+    healFromFood(){
+      this.hp=clamp(this.hp+this.maxHp*this.cfg.healRate,0,this.maxHp);
+    }
     gainFood(amount=1){
+      this.healFromFood();
       this.foodEaten+=amount;
       while(this.foodEaten>=this.nextLevelFood){
         this.foodEaten-=this.nextLevelFood; this.level++;
