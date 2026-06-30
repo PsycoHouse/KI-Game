@@ -7,7 +7,7 @@
   <style>
     :root{
       --bg:#07100b; --panel:#0e1c15cc; --text:#e8ffe9; --muted:#9ab59e;
-      --green:#6bff7c; --herb:#8bd3ff; --pred:#ff6b6b; --queen:#d36bff; --gold:#ffe36b;
+      --green:#6bff7c; --herb:#8bd3ff; --pred:#ff6b6b; --omni:#ffb347; --queen:#d36bff; --gold:#ffe36b;
     }
     *{box-sizing:border-box}
     body{
@@ -25,7 +25,7 @@
     .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0 11px}
     .card{border:1px solid rgba(255,255,255,.1); border-radius:13px; padding:8px; background:rgba(255,255,255,.045)}
     .label{font-size:11px; color:var(--muted); margin-bottom:2px}.value{font-size:21px; font-weight:800}
-    .plants .value{color:var(--green)}.herbs .value{color:var(--herb)}.preds .value{color:var(--pred)}
+    .plants .value{color:var(--green)}.herbs .value{color:var(--herb)}.preds .value{color:var(--pred)}.omnis .value{color:var(--omni)}
     .controls{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
     button{
       border:1px solid rgba(255,255,255,.14); background:#183023; color:var(--text); border-radius:999px;
@@ -37,7 +37,7 @@
     input[type=range]{width:100%; accent-color:#84ff96}
     .sliderRow{display:grid; grid-template-columns:78px 1fr 34px; gap:7px; align-items:center; margin-top:8px; font-size:12px; color:#c7dcc9}
     .legend{position:fixed; right:16px; bottom:16px; padding:10px 12px; border-radius:16px; background:#08120dc0; border:1px solid rgba(255,255,255,.1); font-size:12px; color:#d6eed8; user-select:none}
-    .dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px}.d1{background:var(--green)}.d2{background:var(--herb)}.d3{background:var(--pred)}.d4{background:var(--queen)}
+    .dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px}.d1{background:var(--green)}.d2{background:var(--herb)}.d3{background:var(--pred)}.d4{background:var(--omni)}.d5{background:var(--queen)}
   </style>
 </head>
 <body>
@@ -46,21 +46,21 @@
     <h1>Organismus-Simulation</h1>
     <div class="stats">
       <div class="card plants"><div class="label">Pflanzen</div><div class="value" id="plantCount">0</div></div>
-      <div class="card herbs"><div class="label">Pflanzenfresser</div><div class="value" id="herbCount">0</div></div>
-      <div class="card preds"><div class="label">Räuber</div><div class="value" id="predCount">0</div></div>
-      <div class="card"><div class="label">Königinnen</div><div class="value" id="queenCount" style="color:var(--queen)">0</div></div>
+      <div class="card herbs"><div class="label">Veganer</div><div class="value" id="herbCount">0</div></div>
+      <div class="card preds"><div class="label">Fleischfresser</div><div class="value" id="predCount">0</div></div>
+      <div class="card omnis"><div class="label">Allesfresser</div><div class="value" id="omniCount">0</div></div>
     </div>
     <div class="controls">
-      <button id="pauseBtn">Pause</button><button id="resetBtn">Neu starten</button><button id="addHerb">+ Pflanzenfresser</button><button id="addPred">+ Räuber</button><button id="addQueen">+ Königin</button>
+      <button id="pauseBtn">Pause</button><button id="resetBtn">Neu starten</button><button id="addHerb">+ Veganer</button><button id="addPred">+ Fleischfresser</button><button id="addOmni">+ Allesfresser</button>
     </div>
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
     <div class="hint">
-      Verhalten: Pflanzenfresser suchen zuerst Pflanzen. Wenn kein Essen in der Nähe ist, greifen sie Fleischfresser/Königinnen als Bedrohung aktiv an. Beide Arten verhungern nach bis zu 1 Minute ohne auffindbare Nahrung. Pflanzenfresser leveln nach 5, 10, 20 ... Essen auf und erhalten +2, +4, +8 ... Leben. Fleischfresser leveln nach 20, 40, 80 ... Essen auf und erhalten +10, +20, +40 ... Leben.<br>
-      <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Pflanzenfresser</span><span class="pill">Alt+Klick: Räuber</span><span class="pill">Strg+Klick: Königin</span>
+      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste, Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
+      <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Veganer</span><span class="pill">Alt+Klick: Fleischfresser</span><span class="pill">Strg+Klick: Allesfresser</span>
     </div>
   </div>
-  <div class="legend"><div><span class="dot d1"></span>Pflanze</div><div><span class="dot d2"></span>Pflanzenfresser: Essen zuerst, dann Angriff, levelt durch Pflanzen</div><div><span class="dot d3"></span>Fleischfresser: jagt Pflanzenfresser und levelt durch Beute</div><div><span class="dot d4"></span>Königin: 1000 Treffer, spawnt Räuber</div></div>
+  <div class="legend"><div><span class="dot d1"></span>Pflanze</div><div><span class="dot d2"></span>Veganer: Pflanzen + Verteidigung gegen alle</div><div><span class="dot d3"></span>Fleischfresser: jagt andere Wesen</div><div><span class="dot d4"></span>Allesfresser: Pflanzen und Jagd</div></div>
 <script>
 (() => {
   const canvas = document.getElementById('c');
@@ -70,7 +70,7 @@
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const dist2=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy};
   const angleTo=(a,b)=>Math.atan2(b.y-a.y,b.x-a.x);
-  const plants=[]; const herbs=[]; const preds=[]; const queens=[]; const particles=[];
+  const plants=[]; const herbs=[]; const preds=[]; const omnis=[]; const queens=[]; const particles=[];
   let paused=false, speed=1, plantRate=.82, time=0, last=performance.now();
 
   class Plant{
@@ -89,137 +89,120 @@
   class Creature{
     constructor(x,y,type){
       this.x=x;this.y=y;this.type=type;this.vx=rand(-1,1);this.vy=rand(-1,1);this.dir=rand(0,Math.PI*2);this.age=0;this.cool=rand(2,5);
-      this.energy=type==='herb'?75:95; this.maxEnergy=type==='herb'?150:190; this.r=type==='herb'?6:8; this.dead=false; this.turn=0;
-      this.hp=type==='herb'?1:5; this.maxHp=type==='herb'?1:5; this.attackCool=rand(.1,.8); this.trail=[]; this.hungerPulse=0; this.foodEaten=0;
-      this.level=0; this.nextLevelFood=type==='herb'?5:20; this.nextHpReward=type==='herb'?2:10;
-      this.starveTime=0; this.starveLimit=rand(42,60);
+      const cfg=Creature.config[type];
+      this.energy=cfg.energy; this.maxEnergy=cfg.maxEnergy; this.baseR=cfg.r; this.r=cfg.r; this.dead=false; this.turn=0;
+      this.hp=cfg.hp; this.maxHp=cfg.hp; this.attackCool=rand(.1,.8); this.trail=[]; this.hungerPulse=0; this.foodEaten=0;
+      this.level=0; this.nextLevelFood=cfg.nextLevelFood; this.nextHpReward=cfg.nextHpReward;
+      this.starveTime=0; this.starveLimit=rand(cfg.starveMin,cfg.starveMax);
     }
+    static config={
+      herb:{energy:105,maxEnergy:185,r:5.8,hp:3,nextLevelFood:6,nextHpReward:2,starveMin:48,starveMax:68,speed:45,color:'139,211,255',fill:'#8bd3ff',level:'#dff5ff'},
+      pred:{energy:125,maxEnergy:220,r:7.2,hp:7,nextLevelFood:9,nextHpReward:4,starveMin:54,starveMax:74,speed:50,color:'255,107,107',fill:'#ff6b6b',level:'#ffe36b'},
+      omni:{energy:115,maxEnergy:205,r:6.6,hp:5,nextLevelFood:8,nextHpReward:3,starveMin:50,starveMax:70,speed:47,color:'255,179,71',fill:'#ffb347',level:'#fff0b8'}
+    };
+    get cfg(){return Creature.config[this.type];}
     update(dt){
       this.age+=dt; this.cool-=dt; this.attackCool-=dt; this.turn-=dt;
       this.updateStarvation(dt);
       if(this.dead) return;
       const target=this.findTarget();
-      if(target){ const a=angleTo(this,target); this.dir += Math.atan2(Math.sin(a-this.dir),Math.cos(a-this.dir))*dt*(this.type==='herb'?3.2:4.2); }
+      if(target){ const a=angleTo(this,target); this.dir += Math.atan2(Math.sin(a-this.dir),Math.cos(a-this.dir))*dt*(this.type==='pred'?4.1:3.5); }
       else if(this.turn<=0){ this.turn=rand(.5,1.6); this.dir += rand(-1.4,1.4); }
-      const sp=this.type==='herb'?42:55; const boost=1;
-      this.vx += Math.cos(this.dir)*dt*sp*boost; this.vy += Math.sin(this.dir)*dt*sp*boost;
+      const sp=this.cfg.speed;
+      this.vx += Math.cos(this.dir)*dt*sp; this.vy += Math.sin(this.dir)*dt*sp;
       this.vx*=Math.pow(.82,dt*8); this.vy*=Math.pow(.82,dt*8);
       this.x+=this.vx*dt*5; this.y+=this.vy*dt*5; this.wrap();
       this.eat(); this.fight(); this.reproduce(); this.trail.push({x:this.x,y:this.y,a:.45}); if(this.trail.length>12)this.trail.shift(); for(const t of this.trail)t.a-=dt*.7;
     }
     updateStarvation(dt){
-      const hasFood=this.type==='herb'?plants.length>0:herbs.length>0;
-      if(hasFood){
-        this.starveTime=0;
-        this.hungerPulse=0;
-        return;
-      }
-      this.starveTime+=dt;
-      this.hungerPulse=this.starveTime/this.starveLimit;
+      const hasFood=this.type==='herb'?plants.length>0:this.type==='pred'?this.preyList().length>0:plants.length>0||this.preyList().length>0;
+      if(hasFood){ this.starveTime=0; this.hungerPulse=0; return; }
+      this.starveTime+=dt; this.hungerPulse=this.starveTime/this.starveLimit;
       this.energy=clamp(this.energy-dt*this.maxEnergy/this.starveLimit,0,this.maxEnergy);
       if(this.starveTime>=this.starveLimit) this.die();
     }
+    preyList(){ return [...herbs,...preds,...omnis].filter(c=>c!==this && !c.dead); }
     findTarget(){
       let best=null, bd=Infinity;
-      if(this.type==='herb'){
-        // Priorität 1: Nahrung. Nur wenn keine Pflanze in der Nähe ist, wird aktiv angegriffen.
-        const foodRange=165;
+      const foodRange=this.type==='omni'?150:170;
+      if(this.type!=='pred'){
         for(const item of plants){ const d=dist2(this,item); if(d<foodRange*foodRange && d<bd){bd=d; best=item;} }
-        if(best) return best;
-        const threatRange=260; bd=Infinity;
-        for(const enemy of preds){ const d=dist2(this,enemy); if(d<threatRange*threatRange && d<bd){bd=d; best=enemy;} }
-        for(const queen of queens){ const d=dist2(this,queen); if(d<threatRange*threatRange && d<bd){bd=d; best=queen;} }
-        return best;
+        if(best && (this.type==='herb' || this.energy<this.maxEnergy*.82)) return best;
       }
-      const huntRange=225;
-      for(const item of herbs){ const d=dist2(this,item); if(d<huntRange*huntRange && d<bd){bd=d; best=item;} }
-      return best;
+      const huntRange=this.type==='herb'?145:this.type==='omni'?205:230; bd=Infinity; best=null;
+      for(const enemy of this.preyList()){
+        const d=dist2(this,enemy);
+        const sameTypePenalty=enemy.type===this.type?1.35:1;
+        if(d*sameTypePenalty<huntRange*huntRange && d*sameTypePenalty<bd){bd=d*sameTypePenalty; best=enemy;}
+      }
+      return best || (this.type==='omni'?this.nearestPlant(foodRange):null);
     }
-    hasFoodNearby(){
-      const foodRange=165;
-      for(const p of plants) if(dist2(this,p)<foodRange*foodRange) return true;
-      return false;
-    }
+    nearestPlant(range){ let best=null, bd=Infinity; for(const p of plants){ const d=dist2(this,p); if(d<range*range && d<bd){bd=d; best=p;} } return best; }
     gainFood(amount=1){
       this.foodEaten+=amount;
       while(this.foodEaten>=this.nextLevelFood){
-        this.foodEaten-=this.nextLevelFood;
-        this.level++;
-        this.maxHp+=this.nextHpReward;
-        this.hp=this.maxHp;
-        this.r+=this.type==='herb'?.7:1;
-        this.nextLevelFood*=2;
-        this.nextHpReward*=2;
+        this.foodEaten-=this.nextLevelFood; this.level++;
+        this.maxHp+=this.nextHpReward; this.hp=this.maxHp;
+        this.r=this.baseR*(1+this.level*.12); this.maxEnergy+=6;
+        this.nextLevelFood=Math.ceil(this.nextLevelFood*1.65); this.nextHpReward=Math.ceil(this.nextHpReward*1.55);
         burst(this.x,this.y,this.type);
       }
     }
     eat(){
-      if(this.type==='herb'){
-        for(let i=plants.length-1;i>=0;i--){ if(dist2(this,plants[i])<(this.r+plants[i].r+2)**2){ this.energy=clamp(this.energy+plants[i].energy,0,this.maxEnergy); this.gainFood(); burst(plants[i].x,plants[i].y,'plant'); plants.splice(i,1); break; } }
-      } else {
-        for(let i=herbs.length-1;i>=0;i--){
-          const victim=herbs[i];
-          if(dist2(this,victim)<(this.r+victim.r+3)**2 && this.attackCool<=0){
-            this.energy=clamp(this.energy+60,0,this.maxEnergy); this.attackCool=.65; victim.hp-=1; burst(victim.x,victim.y,'hit');
-            if(victim.hp<=0){ this.energy=clamp(this.energy+70,0,this.maxEnergy); this.gainFood(); victim.dead=true; burst(victim.x,victim.y,'herb'); herbs.splice(i,1); }
-            break;
-          }
+      if(this.type!=='pred'){
+        for(let i=plants.length-1;i>=0;i--) if(dist2(this,plants[i])<(this.r+plants[i].r+2)**2){
+          this.energy=clamp(this.energy+plants[i].energy,0,this.maxEnergy); this.gainFood(this.type==='omni'?.75:1); burst(plants[i].x,plants[i].y,'plant'); plants.splice(i,1); return;
         }
       }
+      if(this.type==='herb') return;
+      this.attackNearbyCreature(1, true);
     }
-
     fight(){
       if(this.attackCool>0) return;
-      if(this.type==='herb'){
-        // Priorität 2: Nur aktiv kämpfen, wenn gerade keine Pflanze in der Nähe ist.
-        if(this.hasFoodNearby()) return;
-        let attacked=false;
-        for(let i=preds.length-1;i>=0;i--){
-          const enemy=preds[i];
-          if(dist2(this,enemy)<(this.r+enemy.r+4)**2){
-            enemy.hp-=1; this.attackCool=.55; this.energy=clamp(this.energy+10,0,this.maxEnergy); burst(enemy.x,enemy.y,'hit');
-            this.vx-=Math.cos(this.dir)*18; this.vy-=Math.sin(this.dir)*18; attacked=true;
-            if(enemy.hp<=0){ enemy.dead=true; burst(enemy.x,enemy.y,'pred'); preds.splice(i,1); }
-            break;
-          }
-        }
-        if(!attacked){
-          for(let i=queens.length-1;i>=0;i--){
-            const queen=queens[i];
-            if(dist2(this,queen)<(this.r+queen.r+4)**2){
-              queen.hp-=1; this.attackCool=.35; this.energy=clamp(this.energy+4,0,this.maxEnergy); burst(queen.x,queen.y,'hit');
-              this.vx-=Math.cos(this.dir)*26; this.vy-=Math.sin(this.dir)*26;
-              if(queen.hp<=0){ queen.dead=true; burst(queen.x,queen.y,'queen'); queens.splice(i,1); }
-              break;
-            }
+      if(this.type==='herb' && this.nearestPlant(115)) return;
+      this.attackNearbyCreature(this.type==='herb'?.65:1, false);
+    }
+    attackNearbyCreature(power, feeding){
+      const groups=[herbs,preds,omnis];
+      for(const group of groups){
+        for(let i=group.length-1;i>=0;i--){
+          const victim=group[i]; if(victim===this || victim.dead) continue;
+          if(dist2(this,victim)<(this.r+victim.r+4)**2){
+            const damage=Math.max(1,Math.round(power*(this.level>=3?2:1)));
+            victim.hp-=damage; this.attackCool=feeding?.62:.72; burst(victim.x,victim.y,'hit');
+            this.vx-=Math.cos(this.dir)*14; this.vy-=Math.sin(this.dir)*14;
+            if(victim.hp<=0){ this.energy=clamp(this.energy+(this.type==='omni'?55:80),0,this.maxEnergy); this.gainFood(this.type==='omni'?1.25:1); victim.dead=true; burst(victim.x,victim.y,victim.type); group.splice(i,1); }
+            return true;
           }
         }
       }
+      return false;
     }
     reproduce(){
-      const threshold=this.type==='herb'?112:150;
-      if(this.energy>threshold && this.cool<=0){
-        this.energy*=.58; this.cool=this.type==='herb'?rand(3.5,7):rand(6,11);
+      const threshold=this.type==='herb'?168:this.type==='omni'?188:205;
+      const cap=this.type==='herb'?90:this.type==='omni'?85:80;
+      const group=this.type==='herb'?herbs:this.type==='pred'?preds:omnis;
+      if(group.length<cap && this.energy>threshold && this.cool<=0){
+        this.energy*=.56; this.cool=this.type==='herb'?rand(7,12):this.type==='omni'?rand(9,14):rand(10,16);
         const a=rand(0,Math.PI*2), d=rand(10,20); const child=new Creature(this.x+Math.cos(a)*d,this.y+Math.sin(a)*d,this.type);
-        child.energy=this.energy*.8; child.cool=rand(4,8); (this.type==='herb'?herbs:preds).push(child); burst(this.x,this.y,this.type);
+        child.energy=this.energy*.75; child.cool=rand(6,10); group.push(child); burst(this.x,this.y,this.type);
       }
     }
-    wrap(){
-      if(this.x<0)this.x+=W;if(this.x>W)this.x-=W;if(this.y<0)this.y+=H;if(this.y>H)this.y-=H;
-    }
+    wrap(){ if(this.x<0)this.x+=W;if(this.x>W)this.x-=W;if(this.y<0)this.y+=H;if(this.y>H)this.y-=H; }
     die(){ this.dead=true; burst(this.x,this.y,'death'); if(Math.random()<.55) addPlant(this.x+rand(-10,10),this.y+rand(-10,10),true); }
     draw(){
-      const color=this.type==='herb'?'139,211,255':'255,107,107';
+      const color=this.cfg.color;
       for(const t of this.trail){ if(t.a<=0)continue; ctx.fillStyle=`rgba(${color},${t.a*.18})`; ctx.beginPath(); ctx.arc(t.x,t.y,this.r*1.5,0,Math.PI*2); ctx.fill(); }
       const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r*5); g.addColorStop(0,`rgba(${color},.25)`); g.addColorStop(1,`rgba(${color},0)`); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(this.x,this.y,this.r*5,0,Math.PI*2); ctx.fill();
       ctx.save(); ctx.translate(this.x,this.y); ctx.rotate(this.dir);
-      ctx.fillStyle=this.type==='herb'?'#8bd3ff':'#ff6b6b'; ctx.beginPath(); ctx.ellipse(0,0,this.r*1.45,this.r,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=this.cfg.fill; ctx.beginPath(); ctx.ellipse(0,0,this.r*1.45,this.r,0,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(this.r*.7,-this.r*.25,this.r*.18,0,Math.PI*2); ctx.arc(this.r*.7,this.r*.25,this.r*.18,0,Math.PI*2); ctx.fill();
       const barW=this.r*2.4, pct=clamp(this.energy/this.maxEnergy,0,1); ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(-barW/2,this.r+4,barW,2); ctx.fillStyle='rgba(255,255,255,.8)'; ctx.fillRect(-barW/2,this.r+4,barW*pct,2);
       if(this.hungerPulse>0){ctx.strokeStyle=`rgba(255,227,107,${.25+this.hungerPulse*.55})`; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(0,0,this.r*(1.8+this.hungerPulse*.8),0,Math.PI*2); ctx.stroke();}
-      const hpPct=clamp(this.hp/this.maxHp,0,1); ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(-barW/2,this.r+8,barW,3); ctx.fillStyle=this.type==='herb'?'#8bd3ff':'#ffe36b'; ctx.fillRect(-barW/2,this.r+8,barW*hpPct,3);
-      const levelPct=clamp(this.foodEaten/this.nextLevelFood,0,1); ctx.fillStyle=this.type==='herb'?'rgba(139,211,255,.9)':'rgba(255,227,107,.9)'; if(this.foodEaten>0) ctx.fillRect(-barW/2,this.r+13,barW*levelPct,2);
+      const hpPct=clamp(this.hp/this.maxHp,0,1); ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(-barW/2,this.r+8,barW,3); ctx.fillStyle=this.cfg.level; ctx.fillRect(-barW/2,this.r+8,barW*hpPct,3);
+      const levelPct=clamp(this.foodEaten/this.nextLevelFood,0,1); ctx.fillStyle=`rgba(${color},.9)`; if(this.foodEaten>0) ctx.fillRect(-barW/2,this.r+13,barW*levelPct,2);
       ctx.restore();
+      if(this.level>0){ ctx.save(); ctx.font=`700 ${clamp(this.r+5,11,22)}px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.75)'; ctx.strokeText(this.level,this.x,this.y-this.r-10); ctx.fillStyle='#fff8d7'; ctx.fillText(this.level,this.x,this.y-this.r-10); ctx.restore(); }
     }
   }
 
@@ -257,11 +240,11 @@
 
 
   function addPlant(x,y,soft=false){x=clamp(x,8,W-8); y=clamp(y,8,H-8); if(!soft || plants.every(p=>dist2(p,{x,y})>46)){plants.push(new Plant(x,y));}}
-  function addCreature(type,x=rand(30,W-30),y=rand(30,H-30)){(type==='herb'?herbs:preds).push(new Creature(x,y,type));}
+  function addCreature(type,x=rand(30,W-30),y=rand(30,H-30)){(type==='herb'?herbs:type==='pred'?preds:omnis).push(new Creature(x,y,type));}
   function addQueen(x=rand(60,W-60),y=rand(60,H-60)){queens.push(new Queen(clamp(x,30,W-30),clamp(y,30,H-30)));}
-  function burst(x,y,type){ const color= type==='plant'?'107,255,124':type==='herb'?'139,211,255':type==='queen'?'211,107,255':type==='death'?'255,227,107':type==='hit'?'255,255,255':'255,107,107'; for(let i=0;i<12;i++)particles.push({x,y,vx:rand(-1,1)*rand(20,70),vy:rand(-1,1)*rand(20,70),a:1,r:rand(1,3),color}); }
+  function burst(x,y,type){ const color= type==='plant'?'107,255,124':type==='herb'?'139,211,255':type==='queen'?'211,107,255':type==='omni'?'255,179,71':type==='death'?'255,227,107':type==='hit'?'255,255,255':'255,107,107'; for(let i=0;i<12;i++)particles.push({x,y,vx:rand(-1,1)*rand(20,70),vy:rand(-1,1)*rand(20,70),a:1,r:rand(1,3),color}); }
 
-  function reset(){ plants.length=herbs.length=preds.length=queens.length=particles.length=0; for(let i=0;i<260;i++) addPlant(rand(20,W-20),rand(20,H-20)); for(let i=0;i<18;i++) addCreature('herb'); for(let i=0;i<5;i++) addCreature('pred'); }
+  function reset(){ plants.length=herbs.length=preds.length=omnis.length=queens.length=particles.length=0; for(let i=0;i<420;i++) addPlant(rand(20,W-20),rand(20,H-20)); for(let i=0;i<50;i++) addCreature('herb'); for(let i=0;i<50;i++) addCreature('pred'); for(let i=0;i<50;i++) addCreature('omni'); }
   function resize(){DPR=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);}
   addEventListener('resize',()=>{resize(); if(plants.length===0)reset();}); resize(); reset();
 
@@ -269,11 +252,12 @@
     time+=dt;
     const spawnChance=plantRate*dt*18;
     if(plants.length<1100 && Math.random()<spawnChance) addPlant(rand(8,W-8),rand(8,H-8),true);
-    plants.forEach(p=>p.update(dt)); herbs.forEach(h=>h.update(dt)); preds.forEach(p=>p.update(dt)); queens.forEach(q=>q.update(dt));
-    for(let i=herbs.length-1;i>=0;i--) if(herbs[i].dead) herbs.splice(i,1); for(let i=preds.length-1;i>=0;i--) if(preds[i].dead) preds.splice(i,1); for(let i=queens.length-1;i>=0;i--) if(queens[i].dead) queens.splice(i,1);
+    plants.forEach(p=>p.update(dt)); herbs.forEach(h=>h.update(dt)); preds.forEach(p=>p.update(dt)); omnis.forEach(o=>o.update(dt)); queens.forEach(q=>q.update(dt));
+    for(let i=herbs.length-1;i>=0;i--) if(herbs[i].dead) herbs.splice(i,1); for(let i=preds.length-1;i>=0;i--) if(preds[i].dead) preds.splice(i,1); for(let i=omnis.length-1;i>=0;i--) if(omnis[i].dead) omnis.splice(i,1); for(let i=queens.length-1;i>=0;i--) if(queens[i].dead) queens.splice(i,1);
     for(let i=particles.length-1;i>=0;i--){const p=particles[i]; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=Math.pow(.86,dt*10); p.vy*=Math.pow(.86,dt*10); p.a-=dt*1.7; if(p.a<=0)particles.splice(i,1)}
     if(herbs.length===0 && plants.length>30) for(let i=0;i<3;i++) addCreature('herb');
-    if(preds.length===0 && herbs.length>25) addCreature('pred');
+    if(preds.length===0 && herbs.length+omnis.length>25) addCreature('pred');
+    if(omnis.length===0 && plants.length>30 && herbs.length+preds.length>20) addCreature('omni');
   }
   function drawBackground(){
     ctx.fillStyle='#07100b'; ctx.fillRect(0,0,W,H);
@@ -288,22 +272,23 @@
     ctx.lineWidth=1;
     for(const h of herbs){ const t=h.findTarget(); if(t){ctx.strokeStyle='rgba(139,211,255,.08)'; ctx.beginPath(); ctx.moveTo(h.x,h.y); ctx.lineTo(t.x,t.y); ctx.stroke();}}
     for(const p of preds){ const t=p.findTarget(); if(t){ctx.strokeStyle='rgba(255,107,107,.09)'; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(t.x,t.y); ctx.stroke();}}
-    herbs.forEach(h=>h.draw()); preds.forEach(p=>p.draw()); queens.forEach(q=>q.draw());
+    for(const o of omnis){ const t=o.findTarget(); if(t){ctx.strokeStyle='rgba(255,179,71,.08)'; ctx.beginPath(); ctx.moveTo(o.x,o.y); ctx.lineTo(t.x,t.y); ctx.stroke();}}
+    herbs.forEach(h=>h.draw()); preds.forEach(p=>p.draw()); omnis.forEach(o=>o.draw()); queens.forEach(q=>q.draw());
     for(const p of particles){ctx.fillStyle=`rgba(${p.color},${p.a})`; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();}
     // vignette
     const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.2,W/2,H/2,Math.max(W,H)*.7); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.45)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   }
   function loop(now){let dt=Math.min((now-last)/1000,.04); last=now; if(!paused) update(dt*speed); draw(); updateHud(); requestAnimationFrame(loop);} requestAnimationFrame(loop);
-  function updateHud(){ plantCount.textContent=plants.length; herbCount.textContent=herbs.length; predCount.textContent=preds.length; queenCount.textContent=queens.length; }
+  function updateHud(){ plantCount.textContent=plants.length; herbCount.textContent=herbs.length; predCount.textContent=preds.length; omniCount.textContent=omnis.length; }
 
   document.getElementById('pauseBtn').onclick=()=>{paused=!paused; pauseBtn.textContent=paused?'Weiter':'Pause'};
   document.getElementById('resetBtn').onclick=reset;
   document.getElementById('addHerb').onclick=()=>{for(let i=0;i<5;i++)addCreature('herb')};
-  document.getElementById('addPred').onclick=()=>{for(let i=0;i<2;i++)addCreature('pred')};
-  document.getElementById('addQueen').onclick=()=>addQueen();
+  document.getElementById('addPred').onclick=()=>{for(let i=0;i<5;i++)addCreature('pred')};
+  document.getElementById('addOmni').onclick=()=>{for(let i=0;i<5;i++)addCreature('omni')};
   document.getElementById('speed').oninput=e=>{speed=+e.target.value; speedVal.textContent=speed.toFixed(1)+'x'};
   document.getElementById('plantRate').oninput=e=>{plantRate=+e.target.value; plantRateVal.textContent=Math.round(plantRate*100)+'%'};
-  canvas.addEventListener('click',e=>{ const r=canvas.getBoundingClientRect(); const x=e.clientX-r.left,y=e.clientY-r.top; if(e.ctrlKey || e.metaKey) addQueen(x,y); else if(e.shiftKey) addCreature('herb',x,y); else if(e.altKey) addCreature('pred',x,y); else for(let i=0;i<8;i++) addPlant(x+rand(-18,18),y+rand(-18,18)); });
+  canvas.addEventListener('click',e=>{ const r=canvas.getBoundingClientRect(); const x=e.clientX-r.left,y=e.clientY-r.top; if(e.ctrlKey || e.metaKey) addCreature('omni',x,y); else if(e.shiftKey) addCreature('herb',x,y); else if(e.altKey) addCreature('pred',x,y); else for(let i=0;i<8;i++) addPlant(x+rand(-18,18),y+rand(-18,18)); });
 })();
 </script>
 </body>
