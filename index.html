@@ -59,7 +59,7 @@
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
     <div class="hint">
-      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Bodyguards greifen Angreifer aktiv an, können selbst Schaden nehmen und sterben. Pistolen schießen auf Wesen und Bodyguards in Reichweite. Wenn ein Wesen mit Pistole oder Bodyguard tötet, zählt das wie Essen: Die Level-Leiste steigt und das Wesen heilt. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
+      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Bodyguards greifen Angreifer aktiv an, können selbst Schaden nehmen und sterben. Pistolen schießen auf Wesen und Bodyguards in Reichweite. Wenn ein Wesen mit Pistole oder Bodyguard tötet, zählt das wie Essen: Die Level-Leiste steigt und das Wesen heilt. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Wenn ein Wesen länger als 10 Sekunden ohne Fortschritt um ein Ziel kreist, bricht es aus und rennt 1 Sekunde in eine zufällige Himmelsrichtung. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
       <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Veganer</span><span class="pill">Alt+Klick: Fleischfresser</span><span class="pill">Strg+Klick: Allesfresser</span>
     </div>
   </div>
@@ -117,6 +117,7 @@
       this.starveTime=0; this.starveLimit=rand(cfg.starveMin,cfg.starveMax);
       this.lastTarget=null; this.lastTargetDistance=Infinity; this.stuckTimer=0; this.stuckTurn=0;
       this.stuckX=this.x; this.stuckY=this.y; this.ignoredFood=[];
+      this.targetTroubleTime=0; this.escapeTimer=0; this.escapeDir=0;
     }
     static config={
       herb:{energy:105,maxEnergy:185,r:5.8,hp:3,healRate:.25,nextLevelFood:6,nextHpReward:2,starveMin:48,starveMax:68,speed:45,color:'139,211,255',fill:'#8bd3ff',level:'#dff5ff'},
@@ -125,13 +126,17 @@
     };
     get cfg(){return Creature.config[this.type];}
     update(dt){
-      this.age+=dt; this.cool-=dt; this.attackCool-=dt; this.turn-=dt;
+      this.age+=dt; this.cool-=dt; this.attackCool-=dt; this.turn-=dt; this.escapeTimer-=dt;
       this.updateStarvation(dt);
       if(this.dead) return;
       this.cleanupIgnoredFood();
       const threat=this.findThreat();
-      const target=threat?null:this.findTarget();
-      if(threat){
+      const escaping=this.escapeTimer>0;
+      const target=(threat || escaping)?null:this.findTarget();
+      if(escaping){
+        this.dir=this.escapeDir;
+      }
+      else if(threat){
         const a=angleTo(threat,this);
         const turnStep=Math.atan2(Math.sin(a-this.dir),Math.cos(a-this.dir))*dt*5.2;
         this.dir += turnStep;
@@ -145,7 +150,7 @@
       }
       else if(this.turn<=0){ this.turn=rand(.5,1.6); this.dir += rand(-1.4,1.4); }
       const healthSpeedFactor=this.injurySpeedFactor();
-      const sp=this.cfg.speed*healthSpeedFactor*(threat?1.32:1);
+      const sp=this.cfg.speed*healthSpeedFactor*(threat?1.32:escaping?1.42:1);
       this.vx += Math.cos(this.dir)*dt*sp; this.vy += Math.sin(this.dir)*dt*sp;
       this.vx*=Math.pow(.82,dt*8); this.vy*=Math.pow(.82,dt*8);
       this.x+=this.vx*dt*5; this.y+=this.vy*dt*5; this.wrap();
@@ -189,6 +194,7 @@
         this.lastTarget=target; this.lastTargetDistance=Math.sqrt(dist2(this,target)); this.resetStuckCheck(false); return;
       }
       this.stuckTimer+=dt;
+      this.targetTroubleTime+=dt;
       const currentDistance=Math.sqrt(dist2(this,target));
       const moved=Math.sqrt((this.x-this.stuckX)**2+(this.y-this.stuckY)**2);
       const gotCloser=this.lastTargetDistance-currentDistance;
@@ -200,12 +206,27 @@
           this.dir+=rand(Math.PI*.65,Math.PI*1.35);
           this.turn=rand(.35,.8);
         }
+        else if(gotCloser>6){
+          this.targetTroubleTime=Math.max(0,this.targetTroubleTime-2.5);
+        }
+        if(this.targetTroubleTime>=10){
+          this.startDirectionalEscape(target);
+        }
         this.lastTargetDistance=currentDistance; this.resetStuckCheck(false);
       }
     }
+    startDirectionalEscape(target){
+      this.ignoreFood(target);
+      this.escapeTimer=1;
+      this.escapeDir=Math.floor(rand(0,4))*Math.PI/2;
+      this.dir=this.escapeDir;
+      const kick=this.cfg.speed*.18;
+      this.vx+=Math.cos(this.escapeDir)*kick; this.vy+=Math.sin(this.escapeDir)*kick;
+      this.turn=1; this.targetTroubleTime=0;
+    }
     resetStuckCheck(clearTarget=true){
       this.stuckTimer=0; this.stuckTurn=0; this.stuckX=this.x; this.stuckY=this.y;
-      if(clearTarget){ this.lastTarget=null; this.lastTargetDistance=Infinity; }
+      if(clearTarget){ this.lastTarget=null; this.lastTargetDistance=Infinity; this.targetTroubleTime=0; }
     }
     findTarget(){
       const foodRange=this.type==='omni'?150:170;
