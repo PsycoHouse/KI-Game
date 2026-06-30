@@ -59,7 +59,7 @@
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
     <div class="hint">
-      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die alle einsammeln wollen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
+      Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum.<br>
       <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Veganer</span><span class="pill">Alt+Klick: Fleischfresser</span><span class="pill">Strg+Klick: Allesfresser</span>
     </div>
   </div>
@@ -175,7 +175,7 @@
       }
       return closest;
     }
-    isAvailableFood(item){ return item && !item.dead && (plants.includes(item) || herbs.includes(item) || preds.includes(item) || omnis.includes(item)); }
+    isAvailableFood(item){ return item && !item.dead && (plants.includes(item) || coins.includes(item) || herbs.includes(item) || preds.includes(item) || omnis.includes(item)); }
     cleanupIgnoredFood(){ this.ignoredFood=this.ignoredFood.filter(entry=>entry.until>time && this.isAvailableFood(entry.item)); }
     isIgnoredFood(item){ return this.ignoredFood.some(entry=>entry.item===item && entry.until>time); }
     ignoreFood(item){
@@ -208,22 +208,41 @@
       if(clearTarget){ this.lastTarget=null; this.lastTargetDistance=Infinity; }
     }
     findTarget(){
-      let best=null, bd=Infinity;
-      for(const coin of coins){ const d=dist2(this,coin); if(d<260*260 && d<bd){bd=d; best=coin;} }
-      if(best) return best;
       const foodRange=this.type==='omni'?150:170;
+      const hunger=1-clamp(this.energy/this.maxEnergy,0,1);
+      let bestFood=null, bestFoodDistance=Infinity;
       if(this.type!=='pred'){
-        for(const item of plants){ if(this.isIgnoredFood(item)) continue; const d=dist2(this,item); if(d<foodRange*foodRange && d<bd){bd=d; best=item;} }
-        if(best && (this.type==='herb' || this.energy<this.maxEnergy*.82)) return best;
+        for(const item of plants){
+          if(this.isIgnoredFood(item)) continue;
+          const d=dist2(this,item);
+          if(d<foodRange*foodRange && d<bestFoodDistance){bestFoodDistance=d; bestFood=item;}
+        }
+        if(bestFood && (this.type==='herb' || this.energy<this.maxEnergy*.82)) return bestFood;
       }
-      const huntRange=this.type==='herb'?145:this.type==='omni'?205:230; bd=Infinity; best=null;
+      const huntRange=this.type==='herb'?145:this.type==='omni'?205:230;
+      let bestPrey=null, bestPreyDistance=Infinity;
       for(const enemy of this.preyList()){
         if(this.isIgnoredFood(enemy)) continue;
         const d=dist2(this,enemy);
         const sameTypePenalty=enemy.type===this.type?1.35:1;
-        if(d*sameTypePenalty<huntRange*huntRange && d*sameTypePenalty<bd){bd=d*sameTypePenalty; best=enemy;}
+        if(d*sameTypePenalty<huntRange*huntRange && d*sameTypePenalty<bestPreyDistance){bestPreyDistance=d*sameTypePenalty; bestPrey=enemy;}
       }
-      return best || (this.type==='omni'?this.nearestPlant(foodRange):null);
+      if(bestPrey && (this.type!=='herb' || !bestFood)) return bestPrey;
+      const coin=this.findCoinTarget(hunger);
+      if(coin) return coin;
+      return bestFood || (this.type==='omni'?this.nearestPlant(foodRange):null);
+    }
+    findCoinTarget(hunger){
+      if(this.money>=10 && this.hasPistol && this.bodyguards.length>=5) return null;
+      const desire=this.hasPistol?Math.max(0,5-this.bodyguards.length)/5:this.money<5?1:.55;
+      const range=clamp(52+desire*58-hunger*42+this.level*2,34,118);
+      let best=null, bd=Infinity;
+      for(const coin of coins){
+        if(this.isIgnoredFood(coin)) continue;
+        const d=dist2(this,coin);
+        if(d<range*range && d<bd){bd=d; best=coin;}
+      }
+      return best;
     }
     nearestPlant(range){ let best=null, bd=Infinity; for(const p of plants){ if(this.isIgnoredFood(p)) continue; const d=dist2(this,p); if(d<range*range && d<bd){bd=d; best=p;} } return best; }
     collectCoins(){
