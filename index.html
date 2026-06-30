@@ -7,7 +7,7 @@
   <style>
     :root{
       --bg:#07100b; --panel:#0e1c15cc; --text:#e8ffe9; --muted:#9ab59e;
-      --green:#6bff7c; --herb:#8bd3ff; --pred:#ff6b6b; --queen:#d36bff; --gold:#ffe36b; --house:#ffd27a;
+      --green:#6bff7c; --herb:#8bd3ff; --pred:#ff6b6b; --queen:#d36bff; --gold:#ffe36b;
     }
     *{box-sizing:border-box}
     body{
@@ -22,7 +22,7 @@
       box-shadow:0 18px 50px #0008; backdrop-filter:blur(8px); user-select:none;
     }
     h1{font-size:18px; margin:0 0 8px; letter-spacing:.3px}
-    .stats{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:10px 0 11px}
+    .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0 11px}
     .card{border:1px solid rgba(255,255,255,.1); border-radius:13px; padding:8px; background:rgba(255,255,255,.045)}
     .label{font-size:11px; color:var(--muted); margin-bottom:2px}.value{font-size:21px; font-weight:800}
     .plants .value{color:var(--green)}.herbs .value{color:var(--herb)}.preds .value{color:var(--pred)}
@@ -37,7 +37,7 @@
     input[type=range]{width:100%; accent-color:#84ff96}
     .sliderRow{display:grid; grid-template-columns:78px 1fr 34px; gap:7px; align-items:center; margin-top:8px; font-size:12px; color:#c7dcc9}
     .legend{position:fixed; right:16px; bottom:16px; padding:10px 12px; border-radius:16px; background:#08120dc0; border:1px solid rgba(255,255,255,.1); font-size:12px; color:#d6eed8; user-select:none}
-    .dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px}.d1{background:var(--green)}.d2{background:var(--herb)}.d3{background:var(--pred)}.d4{background:var(--queen)}.d5{background:var(--house)}
+    .dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px}.d1{background:var(--green)}.d2{background:var(--herb)}.d3{background:var(--pred)}.d4{background:var(--queen)}
   </style>
 </head>
 <body>
@@ -49,7 +49,6 @@
       <div class="card herbs"><div class="label">Pflanzenfresser</div><div class="value" id="herbCount">0</div></div>
       <div class="card preds"><div class="label">Räuber</div><div class="value" id="predCount">0</div></div>
       <div class="card"><div class="label">Königinnen</div><div class="value" id="queenCount" style="color:var(--queen)">0</div></div>
-      <div class="card"><div class="label">Häuser</div><div class="value" id="houseCount" style="color:var(--house)">0</div></div>
     </div>
     <div class="controls">
       <button id="pauseBtn">Pause</button><button id="resetBtn">Neu starten</button><button id="addHerb">+ Pflanzenfresser</button><button id="addPred">+ Räuber</button><button id="addQueen">+ Königin</button>
@@ -57,11 +56,11 @@
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
     <div class="hint">
-      Verhalten: Pflanzenfresser suchen zuerst Pflanzen. Wenn kein Essen in der Nähe ist, greifen sie Fleischfresser/Königinnen als Bedrohung aktiv an. Nach 10 gegessenen Pflanzen können sie ein Haus bauen; Häuser geben Pflanzenfressern im Umkreis +2 Leben. Fleischfresser können Häuser zerstören. Beide Arten verhungern nach bis zu 1 Minute ohne auffindbare Nahrung.<br>
-      <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Pflanzenfresser</span><span class="pill">Alt+Klick: Räuber</span><span class="pill">Strg+Klick: Königin</span><span class="pill">H: Haus setzen</span>
+      Verhalten: Pflanzenfresser suchen zuerst Pflanzen. Wenn kein Essen in der Nähe ist, greifen sie Fleischfresser/Königinnen als Bedrohung aktiv an. Beide Arten verhungern nach bis zu 1 Minute ohne auffindbare Nahrung. Pflanzenfresser leveln nach 5, 10, 20 ... Essen auf und erhalten +2, +4, +8 ... Leben. Fleischfresser leveln nach 20, 40, 80 ... Essen auf und erhalten +10, +20, +40 ... Leben.<br>
+      <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Pflanzenfresser</span><span class="pill">Alt+Klick: Räuber</span><span class="pill">Strg+Klick: Königin</span>
     </div>
   </div>
-  <div class="legend"><div><span class="dot d1"></span>Pflanze</div><div><span class="dot d2"></span>Pflanzenfresser: Essen zuerst, dann Angriff</div><div><span class="dot d3"></span>Fleischfresser: 5 Leben, jagt Pflanzenfresser und zerstört Häuser</div><div><span class="dot d4"></span>Königin: 1000 Treffer, spawnt Räuber</div><div><span class="dot d5"></span>Haus: +2 Leben im Umkreis</div></div>
+  <div class="legend"><div><span class="dot d1"></span>Pflanze</div><div><span class="dot d2"></span>Pflanzenfresser: Essen zuerst, dann Angriff, levelt durch Pflanzen</div><div><span class="dot d3"></span>Fleischfresser: jagt Pflanzenfresser und levelt durch Beute</div><div><span class="dot d4"></span>Königin: 1000 Treffer, spawnt Räuber</div></div>
 <script>
 (() => {
   const canvas = document.getElementById('c');
@@ -71,7 +70,7 @@
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const dist2=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy};
   const angleTo=(a,b)=>Math.atan2(b.y-a.y,b.x-a.x);
-  const plants=[]; const herbs=[]; const preds=[]; const queens=[]; const houses=[]; const particles=[];
+  const plants=[]; const herbs=[]; const preds=[]; const queens=[]; const particles=[];
   let paused=false, speed=1, plantRate=.82, time=0, last=performance.now();
 
   class Plant{
@@ -91,12 +90,12 @@
     constructor(x,y,type){
       this.x=x;this.y=y;this.type=type;this.vx=rand(-1,1);this.vy=rand(-1,1);this.dir=rand(0,Math.PI*2);this.age=0;this.cool=rand(2,5);
       this.energy=type==='herb'?75:95; this.maxEnergy=type==='herb'?150:190; this.r=type==='herb'?6:8; this.dead=false; this.turn=0;
-      this.hp=type==='herb'?1:5; this.maxHp=type==='herb'?1:5; this.attackCool=rand(.1,.8); this.trail=[]; this.hungerPulse=0; this.foodEaten=0; this.buffed=false;
+      this.hp=type==='herb'?1:5; this.maxHp=type==='herb'?1:5; this.attackCool=rand(.1,.8); this.trail=[]; this.hungerPulse=0; this.foodEaten=0;
+      this.level=0; this.nextLevelFood=type==='herb'?5:20; this.nextHpReward=type==='herb'?2:10;
       this.starveTime=0; this.starveLimit=rand(42,60);
     }
     update(dt){
       this.age+=dt; this.cool-=dt; this.attackCool-=dt; this.turn-=dt;
-      this.applyHouseBuff();
       this.updateStarvation(dt);
       if(this.dead) return;
       const target=this.findTarget();
@@ -134,9 +133,6 @@
       }
       const huntRange=225;
       for(const item of herbs){ const d=dist2(this,item); if(d<huntRange*huntRange && d<bd){bd=d; best=item;} }
-      if(best) return best;
-      const houseRange=300;
-      for(const item of houses){ const d=dist2(this,item); if(d<houseRange*houseRange && d<bd){bd=d; best=item;} }
       return best;
     }
     hasFoodNearby(){
@@ -144,36 +140,29 @@
       for(const p of plants) if(dist2(this,p)<foodRange*foodRange) return true;
       return false;
     }
-    applyHouseBuff(){
-      if(this.type!=='herb') return;
-      let inAura=false;
-      for(const h of houses){ if(dist2(this,h)<h.radius*h.radius){ inAura=true; break; } }
-      this.buffed=inAura;
-      this.maxHp=inAura?3:1;
-      if(inAura && this.hp<this.maxHp) this.hp=this.maxHp;
-      if(!inAura && this.hp>1) this.hp=1;
+    gainFood(amount=1){
+      this.foodEaten+=amount;
+      while(this.foodEaten>=this.nextLevelFood){
+        this.foodEaten-=this.nextLevelFood;
+        this.level++;
+        this.maxHp+=this.nextHpReward;
+        this.hp=this.maxHp;
+        this.r+=this.type==='herb'?.7:1;
+        this.nextLevelFood*=2;
+        this.nextHpReward*=2;
+        burst(this.x,this.y,this.type);
+      }
     }
     eat(){
       if(this.type==='herb'){
-        for(let i=plants.length-1;i>=0;i--){ if(dist2(this,plants[i])<(this.r+plants[i].r+2)**2){ this.energy=clamp(this.energy+plants[i].energy,0,this.maxEnergy); this.foodEaten++; burst(plants[i].x,plants[i].y,'plant'); plants.splice(i,1); this.tryBuildHouse(); break; } }
+        for(let i=plants.length-1;i>=0;i--){ if(dist2(this,plants[i])<(this.r+plants[i].r+2)**2){ this.energy=clamp(this.energy+plants[i].energy,0,this.maxEnergy); this.gainFood(); burst(plants[i].x,plants[i].y,'plant'); plants.splice(i,1); break; } }
       } else {
         for(let i=herbs.length-1;i>=0;i--){
           const victim=herbs[i];
           if(dist2(this,victim)<(this.r+victim.r+3)**2 && this.attackCool<=0){
-            this.energy=clamp(this.energy+60,0,this.maxEnergy); this.attackCool=.65; victim.applyHouseBuff(); victim.hp-=1; burst(victim.x,victim.y,'hit');
-            if(victim.hp<=0){ this.energy=clamp(this.energy+70,0,this.maxEnergy); victim.dead=true; burst(victim.x,victim.y,'herb'); herbs.splice(i,1); }
+            this.energy=clamp(this.energy+60,0,this.maxEnergy); this.attackCool=.65; victim.hp-=1; burst(victim.x,victim.y,'hit');
+            if(victim.hp<=0){ this.energy=clamp(this.energy+70,0,this.maxEnergy); this.gainFood(); victim.dead=true; burst(victim.x,victim.y,'herb'); herbs.splice(i,1); }
             break;
-          }
-        }
-        if(this.attackCool<=0){
-          for(let i=houses.length-1;i>=0;i--){
-            const house=houses[i];
-            if(dist2(this,house)<(this.r+house.r+8)**2){
-              house.hp-=1; this.attackCool=.8; burst(house.x,house.y,'hit');
-              this.vx-=Math.cos(this.dir)*16; this.vy-=Math.sin(this.dir)*16;
-              if(house.hp<=0){ burst(house.x,house.y,'house'); houses.splice(i,1); }
-              break;
-            }
           }
         }
       }
@@ -207,11 +196,6 @@
         }
       }
     }
-    tryBuildHouse(){
-      if(this.type!=='herb' || this.foodEaten<10) return;
-      const tooClose=houses.some(h=>dist2(this,h)<150*150);
-      if(!tooClose && houses.length<90){ addHouse(this.x,this.y); this.foodEaten=0; this.cool=Math.max(this.cool,1.2); burst(this.x,this.y,'house'); }
-    }
     reproduce(){
       const threshold=this.type==='herb'?112:150;
       if(this.energy>threshold && this.cool<=0){
@@ -233,33 +217,11 @@
       ctx.fillStyle='rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(this.r*.7,-this.r*.25,this.r*.18,0,Math.PI*2); ctx.arc(this.r*.7,this.r*.25,this.r*.18,0,Math.PI*2); ctx.fill();
       const barW=this.r*2.4, pct=clamp(this.energy/this.maxEnergy,0,1); ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(-barW/2,this.r+4,barW,2); ctx.fillStyle='rgba(255,255,255,.8)'; ctx.fillRect(-barW/2,this.r+4,barW*pct,2);
       if(this.hungerPulse>0){ctx.strokeStyle=`rgba(255,227,107,${.25+this.hungerPulse*.55})`; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(0,0,this.r*(1.8+this.hungerPulse*.8),0,Math.PI*2); ctx.stroke();}
-      if(this.type==='pred'){ctx.fillStyle='#ffe36b'; for(let i=0;i<this.hp;i++)ctx.fillRect(-barW/2+i*5,this.r+8,3,3);}
-      if(this.type==='herb'){ctx.fillStyle=this.buffed?'#ffd27a':'#ffffff'; for(let i=0;i<this.hp;i++)ctx.fillRect(-barW/2+i*5,this.r+8,3,3); ctx.fillStyle='rgba(255,210,122,.9)'; if(this.foodEaten>0) ctx.fillRect(-barW/2,this.r+12,barW*clamp(this.foodEaten/10,0,1),2);}
+      const hpPct=clamp(this.hp/this.maxHp,0,1); ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect(-barW/2,this.r+8,barW,3); ctx.fillStyle=this.type==='herb'?'#8bd3ff':'#ffe36b'; ctx.fillRect(-barW/2,this.r+8,barW*hpPct,3);
+      const levelPct=clamp(this.foodEaten/this.nextLevelFood,0,1); ctx.fillStyle=this.type==='herb'?'rgba(139,211,255,.9)':'rgba(255,227,107,.9)'; if(this.foodEaten>0) ctx.fillRect(-barW/2,this.r+13,barW*levelPct,2);
       ctx.restore();
     }
   }
-
-  class House{
-    constructor(x,y){
-      this.x=clamp(x,30,W-30); this.y=clamp(y,30,H-30); this.r=13; this.radius=120; this.pulse=rand(0,Math.PI*2); this.hp=8; this.maxHp=8;
-    }
-    draw(){
-      const a=.12+.04*Math.sin(time*2+this.pulse);
-      const aura=ctx.createRadialGradient(this.x,this.y,8,this.x,this.y,this.radius);
-      aura.addColorStop(0,`rgba(255,210,122,${a})`); aura.addColorStop(1,'rgba(255,210,122,0)');
-      ctx.fillStyle=aura; ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle='rgba(255,210,122,.18)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(this.x,this.y,this.radius,0,Math.PI*2); ctx.stroke();
-      ctx.save(); ctx.translate(this.x,this.y);
-      ctx.fillStyle='#8a5b2d'; ctx.fillRect(-12,-2,24,18);
-      ctx.fillStyle='#ffd27a'; ctx.beginPath(); ctx.moveTo(-16,-2); ctx.lineTo(0,-18); ctx.lineTo(16,-2); ctx.closePath(); ctx.fill();
-      ctx.fillStyle='rgba(20,12,5,.75)'; ctx.fillRect(-4,6,8,10);
-      ctx.restore();
-      const barW=32, pct=clamp(this.hp/this.maxHp,0,1);
-      ctx.fillStyle='rgba(0,0,0,.45)'; ctx.fillRect(this.x-barW/2,this.y+22,barW,4);
-      ctx.fillStyle='#ffd27a'; ctx.fillRect(this.x-barW/2,this.y+22,barW*pct,4);
-    }
-  }
-
 
   class Queen{
     constructor(x,y){
@@ -297,10 +259,9 @@
   function addPlant(x,y,soft=false){x=clamp(x,8,W-8); y=clamp(y,8,H-8); if(!soft || plants.every(p=>dist2(p,{x,y})>46)){plants.push(new Plant(x,y));}}
   function addCreature(type,x=rand(30,W-30),y=rand(30,H-30)){(type==='herb'?herbs:preds).push(new Creature(x,y,type));}
   function addQueen(x=rand(60,W-60),y=rand(60,H-60)){queens.push(new Queen(clamp(x,30,W-30),clamp(y,30,H-30)));}
-  function addHouse(x=rand(60,W-60),y=rand(60,H-60)){houses.push(new House(x,y));}
-  function burst(x,y,type){ const color= type==='plant'?'107,255,124':type==='herb'?'139,211,255':type==='queen'?'211,107,255':type==='death'?'255,227,107':type==='house'?'255,210,122':type==='hit'?'255,255,255':'255,107,107'; for(let i=0;i<12;i++)particles.push({x,y,vx:rand(-1,1)*rand(20,70),vy:rand(-1,1)*rand(20,70),a:1,r:rand(1,3),color}); }
+  function burst(x,y,type){ const color= type==='plant'?'107,255,124':type==='herb'?'139,211,255':type==='queen'?'211,107,255':type==='death'?'255,227,107':type==='hit'?'255,255,255':'255,107,107'; for(let i=0;i<12;i++)particles.push({x,y,vx:rand(-1,1)*rand(20,70),vy:rand(-1,1)*rand(20,70),a:1,r:rand(1,3),color}); }
 
-  function reset(){ plants.length=herbs.length=preds.length=queens.length=houses.length=particles.length=0; for(let i=0;i<260;i++) addPlant(rand(20,W-20),rand(20,H-20)); for(let i=0;i<18;i++) addCreature('herb'); for(let i=0;i<5;i++) addCreature('pred'); }
+  function reset(){ plants.length=herbs.length=preds.length=queens.length=particles.length=0; for(let i=0;i<260;i++) addPlant(rand(20,W-20),rand(20,H-20)); for(let i=0;i<18;i++) addCreature('herb'); for(let i=0;i<5;i++) addCreature('pred'); }
   function resize(){DPR=Math.min(devicePixelRatio||1,2); W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);}
   addEventListener('resize',()=>{resize(); if(plants.length===0)reset();}); resize(); reset();
 
@@ -323,7 +284,6 @@
   function draw(){
     drawBackground();
     plants.forEach(p=>p.draw());
-    houses.forEach(h=>h.draw());
     // faint target lines for readable AI behavior
     ctx.lineWidth=1;
     for(const h of herbs){ const t=h.findTarget(); if(t){ctx.strokeStyle='rgba(139,211,255,.08)'; ctx.beginPath(); ctx.moveTo(h.x,h.y); ctx.lineTo(t.x,t.y); ctx.stroke();}}
@@ -334,7 +294,7 @@
     const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.2,W/2,H/2,Math.max(W,H)*.7); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.45)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   }
   function loop(now){let dt=Math.min((now-last)/1000,.04); last=now; if(!paused) update(dt*speed); draw(); updateHud(); requestAnimationFrame(loop);} requestAnimationFrame(loop);
-  function updateHud(){ plantCount.textContent=plants.length; herbCount.textContent=herbs.length; predCount.textContent=preds.length; queenCount.textContent=queens.length; houseCount.textContent=houses.length; }
+  function updateHud(){ plantCount.textContent=plants.length; herbCount.textContent=herbs.length; predCount.textContent=preds.length; queenCount.textContent=queens.length; }
 
   document.getElementById('pauseBtn').onclick=()=>{paused=!paused; pauseBtn.textContent=paused?'Weiter':'Pause'};
   document.getElementById('resetBtn').onclick=reset;
@@ -344,7 +304,6 @@
   document.getElementById('speed').oninput=e=>{speed=+e.target.value; speedVal.textContent=speed.toFixed(1)+'x'};
   document.getElementById('plantRate').oninput=e=>{plantRate=+e.target.value; plantRateVal.textContent=Math.round(plantRate*100)+'%'};
   canvas.addEventListener('click',e=>{ const r=canvas.getBoundingClientRect(); const x=e.clientX-r.left,y=e.clientY-r.top; if(e.ctrlKey || e.metaKey) addQueen(x,y); else if(e.shiftKey) addCreature('herb',x,y); else if(e.altKey) addCreature('pred',x,y); else for(let i=0;i<8;i++) addPlant(x+rand(-18,18),y+rand(-18,18)); });
-  addEventListener('keydown',e=>{ if(e.key.toLowerCase()==='h'){ addHouse(rand(80,W-80),rand(80,H-80)); } });
 })();
 </script>
 </body>
