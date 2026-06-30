@@ -69,7 +69,7 @@
   const rand=(a,b)=>a+Math.random()*(b-a);
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const dist2=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y;return dx*dx+dy*dy};
-  const norm=(x,y)=>{const l=Math.hypot(x,y)||1;return {x:x/l,y:y/l,len:l};};
+  const angleTo=(a,b)=>Math.atan2(b.y-a.y,b.x-a.x);
   const plants=[]; const herbs=[]; const preds=[]; const omnis=[]; const queens=[]; const particles=[];
   let paused=false, speed=1, plantRate=.82, time=0, last=performance.now();
 
@@ -105,42 +105,14 @@
       this.age+=dt; this.cool-=dt; this.attackCool-=dt; this.turn-=dt;
       this.updateStarvation(dt);
       if(this.dead) return;
-      this.steer(dt, this.findTarget());
-      this.x+=this.vx*dt; this.y+=this.vy*dt; this.wrap();
+      const target=this.findTarget();
+      if(target){ const a=angleTo(this,target); this.dir += Math.atan2(Math.sin(a-this.dir),Math.cos(a-this.dir))*dt*(this.type==='pred'?4.1:3.5); }
+      else if(this.turn<=0){ this.turn=rand(.5,1.6); this.dir += rand(-1.4,1.4); }
+      const sp=this.cfg.speed;
+      this.vx += Math.cos(this.dir)*dt*sp; this.vy += Math.sin(this.dir)*dt*sp;
+      this.vx*=Math.pow(.82,dt*8); this.vy*=Math.pow(.82,dt*8);
+      this.x+=this.vx*dt*5; this.y+=this.vy*dt*5; this.wrap();
       this.eat(); this.fight(); this.trail.push({x:this.x,y:this.y,a:.45}); if(this.trail.length>12)this.trail.shift(); for(const t of this.trail)t.a-=dt*.7;
-    }
-    steer(dt,target){
-      const maxSpeed=this.cfg.speed*(target?1.1:.62);
-      let desiredX=0, desiredY=0;
-      if(target){
-        const n=norm(target.x-this.x,target.y-this.y);
-        const stopDist=this.r+(target.r||0)+10;
-        const arrive=clamp((n.len-stopDist)/70,.25,1);
-        desiredX=n.x*maxSpeed*arrive; desiredY=n.y*maxSpeed*arrive;
-      }else{
-        if(this.turn<=0){ this.turn=rand(.55,1.7); this.dir += rand(-1.1,1.1); }
-        desiredX=Math.cos(this.dir)*maxSpeed; desiredY=Math.sin(this.dir)*maxSpeed;
-      }
-
-      // Keep nearby creatures from locking into circular pursuit paths.
-      // The separation force is symmetric and is applied before velocity smoothing,
-      // so pairs slow down and make space instead of endlessly orbiting.
-      for(const other of this.preyList()){
-        const dx=this.x-other.x, dy=this.y-other.y, d=Math.hypot(dx,dy)||1;
-        const minSpace=this.r+other.r+18;
-        if(d<minSpace){
-          const push=(1-d/minSpace)*this.cfg.speed*1.35;
-          desiredX+=(dx/d)*push; desiredY+=(dy/d)*push;
-        }
-      }
-
-      const responsiveness=target?9.5:4.2;
-      const blend=1-Math.exp(-responsiveness*dt);
-      this.vx+=(desiredX-this.vx)*blend;
-      this.vy+=(desiredY-this.vy)*blend;
-      const v=norm(this.vx,this.vy);
-      if(v.len>maxSpeed*1.18){ this.vx=v.x*maxSpeed*1.18; this.vy=v.y*maxSpeed*1.18; }
-      if(v.len>.5) this.dir=Math.atan2(this.vy,this.vx);
     }
     updateStarvation(dt){
       const hasFood=this.type==='herb'?plants.length>0:this.type==='pred'?this.preyList().length>0:plants.length>0||this.preyList().length>0;
