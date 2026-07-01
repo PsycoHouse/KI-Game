@@ -21,7 +21,12 @@
       border:1px solid rgba(180,255,190,.16); border-radius:18px; padding:14px 14px 12px;
       box-shadow:0 18px 50px #0008; backdrop-filter:blur(8px); user-select:none;
     }
-    h1{font-size:18px; margin:0 0 8px; letter-spacing:.3px}
+    .panelHeader{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px}
+    h1{font-size:18px; margin:0; letter-spacing:.3px}
+    .collapseBtn{min-width:34px; padding:5px 9px; border-radius:10px; font-size:16px; line-height:1}
+    .panel.collapsed .panelBody{display:none}
+    .panel.collapsed{width:auto; max-width:min(390px,calc(100vw - 32px)); padding-bottom:14px}
+    .panel.collapsed .panelHeader{margin-bottom:0}
     .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:10px 0 11px}
     .card{border:1px solid rgba(255,255,255,.1); border-radius:13px; padding:8px; background:rgba(255,255,255,.045)}
     .label{font-size:11px; color:var(--muted); margin-bottom:2px}.value{font-size:21px; font-weight:800}
@@ -35,18 +40,20 @@
     .hint{font-size:12px; line-height:1.35; color:#c9dfcb; margin-top:10px}
     .pill{display:inline-block; border-radius:999px; padding:2px 7px; margin:1px 3px 1px 0; border:1px solid rgba(255,255,255,.12); background:#ffffff0a}
     input[type=range]{width:100%; accent-color:#84ff96}
-    .sliderRow{display:grid; grid-template-columns:78px 1fr 34px; gap:7px; align-items:center; margin-top:8px; font-size:12px; color:#c7dcc9}
+    .sliderRow{display:grid; grid-template-columns:78px 1fr 42px; gap:7px; align-items:center; margin-top:8px; font-size:12px; color:#c7dcc9}
     .legend{position:fixed; right:16px; bottom:16px; padding:10px 12px; border-radius:16px; background:#08120dc0; border:1px solid rgba(255,255,255,.1); font-size:12px; color:#d6eed8; user-select:none}
+    .legend .panelHeader{margin-bottom:0}.legend:not(.collapsed) .panelHeader{margin-bottom:8px}
     .scoreboard{position:fixed; right:16px; top:16px; width:300px; padding:13px; border-radius:18px; background:linear-gradient(180deg,rgba(14,28,21,.94),rgba(8,16,12,.84)); border:1px solid rgba(255,227,107,.24); box-shadow:0 18px 50px #0008; backdrop-filter:blur(8px); user-select:none}
-    .scoreboard h2{font-size:16px; margin:0 0 10px; color:#fff1a7}.scoreRows{display:grid; gap:7px}.scoreRow{display:grid; grid-template-columns:25px 1fr; gap:8px; padding:8px; border:1px solid rgba(255,255,255,.1); border-radius:12px; background:rgba(255,255,255,.045)}
+    .scoreboard h2{font-size:16px; margin:0; color:#fff1a7}.scoreRows{display:grid; gap:7px}.scoreRow{display:grid; grid-template-columns:25px 1fr; gap:8px; padding:8px; border:1px solid rgba(255,255,255,.1); border-radius:12px; background:rgba(255,255,255,.045)}
     .rank{font-weight:900; color:var(--gold); font-size:18px}.scoreName{font-weight:800}.scoreMeta{font-size:11px; color:#cfe3d1; line-height:1.35}.money{color:var(--gold); font-weight:800}.gear{color:#f8f3ff}
     .dot{display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px}.d1{background:var(--green)}.d2{background:var(--herb)}.d3{background:var(--pred)}.d4{background:var(--omni)}.d5{background:var(--queen)}.d6{background:var(--gold)}.d7{background:var(--guard)}
   </style>
 </head>
 <body>
   <canvas id="c"></canvas>
-  <div class="hud">
-    <h1>Organismus-Simulation</h1>
+  <div class="hud panel" data-panel="hud">
+    <div class="panelHeader"><h1>Organismus-Simulation</h1><button class="collapseBtn" data-collapse="hud" aria-label="Bedienfeld einklappen">−</button></div>
+    <div class="panelBody">
     <div class="stats">
       <div class="card plants"><div class="label">Pflanzen</div><div class="value" id="plantCount">0</div></div>
       <div class="card herbs"><div class="label">Veganer</div><div class="value" id="herbCount">0</div></div>
@@ -54,20 +61,24 @@
       <div class="card omnis"><div class="label">Allesfresser</div><div class="value" id="omniCount">0</div></div>
     </div>
     <div class="controls">
-      <button id="pauseBtn">Pause</button><button id="resetBtn">Neu starten</button><button id="addHerb">+ Veganer</button><button id="addPred">+ Fleischfresser</button><button id="addOmni">+ Allesfresser</button>
+      <button id="pauseBtn">Pause</button><button id="resetBtn">Neu starten</button><button id="collapseAll">Alle einklappen</button><button id="expandAll">Alle ausklappen</button><button id="addHerb">+ Veganer</button><button id="addPred">+ Fleischfresser</button><button id="addOmni">+ Allesfresser</button>
     </div>
     <div class="sliderRow"><span>Speed</span><input id="speed" type="range" min="0.3" max="3" step="0.1" value="1"><b id="speedVal">1.0x</b></div>
     <div class="sliderRow"><span>Pflanzen</span><input id="plantRate" type="range" min="0" max="1" step="0.01" value="0.82"><b id="plantRateVal">82%</b></div>
+    <div class="sliderRow"><span>HP Veganer</span><input id="herbHp" type="range" min="1" max="30" step="1" value="3"><b id="herbHpVal">3</b></div>
+    <div class="sliderRow"><span>HP Fleisch</span><input id="predHp" type="range" min="1" max="30" step="1" value="7"><b id="predHpVal">7</b></div>
+    <div class="sliderRow"><span>HP Alles</span><input id="omniHp" type="range" min="1" max="30" step="1" value="5"><b id="omniHpVal">5</b></div>
     <div class="hint">
       Verhalten: Jeder spielt gegen jeden. 50 Veganer, 50 Fleischfresser und 50 Allesfresser starten gemeinsam. Überall erscheinen Goldmünzen, die Wesen nur noch opportunistisch einsammeln, ohne ihre Nahrungssuche dauerhaft zu unterbrechen. Für 5 Münzen kauft ein Wesen automatisch einen Bodyguard (maximal 5), für 10 Münzen eine Pistole. Bodyguards greifen Angreifer aktiv an, können selbst Schaden nehmen und sterben. Pistolen schießen auf Wesen und Bodyguards in Reichweite. Wenn ein Wesen mit Pistole oder Bodyguard tötet, zählt das wie Essen: Die Level-Leiste steigt und das Wesen heilt. Veganer fressen Pflanzen, Fleischfresser jagen andere Wesen, Allesfresser nutzen beides. Schwer verletzte Wesen priorisieren ihr Überleben: Wenn ein möglicher Angreifer in der Nähe ist, brechen sie die Jagd ab und fliehen. Verletzte Wesen sind abhängig vom verbleibenden Leben etwas langsamer. Wenn ein Wesen länger als 10 Sekunden ohne Fortschritt um ein Ziel kreist, bricht es aus und rennt 1 Sekunde in eine zufällige Himmelsrichtung. Das Levelsystem bleibt erhalten: Essen füllt die Level-Leiste und heilt: Fleischfresser werden nach einer Mahlzeit komplett gesund, Allesfresser heilen halb so stark und Veganer halb so stark wie Allesfresser. Wenn Fleischfresser ihresgleichen auffressen, steigen sie sofort eine komplette Stufe auf. Level-ups geben mehr Leben, machen Wesen sichtbar größer und zeigen die Level-Ziffer direkt über dem Individuum. Ab Level 7 wird ein Individuum zum stationären Nest mit 100 HP. Das Nest gründet ein Volk mit maximal 10 Dienern auf Level 3: bis zu 8 Verteidiger bleiben beim Nest, bis zu 2 Jäger suchen Gegner und sammeln Gold. Es gibt immer mindestens einen Jäger; bleiben nur Diener ohne Jäger übrig, wird automatisch ein Verteidiger zum Jäger. Jäger finanzieren neue Diener für je 3 Gold. Diener, ihr Nest und andere Diener desselben Nests gelten als Team und greifen sich nicht mehr gegenseitig an. Erreicht ein Diener Level 7, wird auch er zu einem eigenen Nest.<br>
       <span class="pill">Klick: Pflanze setzen</span><span class="pill">Shift+Klick: Veganer</span><span class="pill">Alt+Klick: Fleischfresser</span><span class="pill">Strg+Klick: Allesfresser</span>
     </div>
+    </div>
   </div>
-  <aside class="scoreboard">
-    <h2>🏆 Highscore Top 5</h2>
-    <div class="scoreRows" id="scoreRows"></div>
+  <aside class="scoreboard panel" data-panel="scoreboard">
+    <div class="panelHeader"><h2>🏆 Highscore Top 5</h2><button class="collapseBtn" data-collapse="scoreboard" aria-label="Highscore einklappen">−</button></div>
+    <div class="panelBody"><div class="scoreRows" id="scoreRows"></div></div>
   </aside>
-  <div class="legend"><div><span class="dot d1"></span>Pflanze</div><div><span class="dot d6"></span>Goldmünze: Geld für alle</div><div><span class="dot d7"></span>Bodyguard: 5 Münzen, max. 5</div><div><span class="dot d5"></span>Nest ab Level 7: 100 HP, max. 10 Diener</div><div><span class="dot d2"></span>Veganer: Pflanzen + Verteidigung gegen alle</div><div><span class="dot d3"></span>Fleischfresser: jagt andere Wesen</div><div><span class="dot d4"></span>Allesfresser: Pflanzen und Jagd</div></div>
+  <div class="legend panel" data-panel="legend"><div class="panelHeader"><strong>Legende</strong><button class="collapseBtn" data-collapse="legend" aria-label="Legende einklappen">−</button></div><div class="panelBody"><div><span class="dot d1"></span>Pflanze</div><div><span class="dot d6"></span>Goldmünze: Geld für alle</div><div><span class="dot d7"></span>Bodyguard: 5 Münzen, max. 5</div><div><span class="dot d5"></span>Nest ab Level 7: 100 HP, max. 10 Diener</div><div><span class="dot d2"></span>Veganer: Pflanzen + Verteidigung gegen alle</div><div><span class="dot d3"></span>Fleischfresser: jagt andere Wesen</div><div><span class="dot d4"></span>Allesfresser: Pflanzen und Jagd</div></div></div>
 <script>
 (() => {
   const canvas = document.getElementById('c');
@@ -533,6 +544,33 @@
   document.getElementById('addOmni').onclick=()=>{for(let i=0;i<5;i++)addCreature('omni')};
   document.getElementById('speed').oninput=e=>{speed=+e.target.value; speedVal.textContent=speed.toFixed(1)+'x'};
   document.getElementById('plantRate').oninput=e=>{plantRate=+e.target.value; plantRateVal.textContent=Math.round(plantRate*100)+'%'};
+  function setRaceHp(type,value){
+    const old=Creature.config[type].hp, next=+value, delta=next-old;
+    if(delta===0) return;
+    Creature.config[type].hp=next;
+    const group=type==='herb'?herbs:type==='pred'?preds:omnis;
+    for(const c of group){
+      const pct=clamp(c.hp/c.maxHp,0,1);
+      c.maxHp=Math.max(1,c.maxHp+delta);
+      c.hp=clamp(Math.ceil(c.maxHp*pct),1,c.maxHp);
+    }
+  }
+  document.getElementById('herbHp').oninput=e=>{setRaceHp('herb',e.target.value); herbHpVal.textContent=e.target.value};
+  document.getElementById('predHp').oninput=e=>{setRaceHp('pred',e.target.value); predHpVal.textContent=e.target.value};
+  document.getElementById('omniHp').oninput=e=>{setRaceHp('omni',e.target.value); omniHpVal.textContent=e.target.value};
+  function setPanelCollapsed(panel,collapsed){
+    panel.classList.toggle('collapsed',collapsed);
+    const btn=panel.querySelector('[data-collapse]');
+    if(!btn) return;
+    btn.textContent=collapsed?'＋':'−';
+    btn.setAttribute('aria-label',collapsed?'Box ausklappen':'Box einklappen');
+  }
+  document.querySelectorAll('[data-collapse]').forEach(btn=>btn.addEventListener('click',()=>{
+    const panel=document.querySelector(`[data-panel="${btn.dataset.collapse}"]`);
+    setPanelCollapsed(panel,!panel.classList.contains('collapsed'));
+  }));
+  document.getElementById('collapseAll').onclick=()=>document.querySelectorAll('.panel').forEach(panel=>setPanelCollapsed(panel,true));
+  document.getElementById('expandAll').onclick=()=>document.querySelectorAll('.panel').forEach(panel=>setPanelCollapsed(panel,false));
   canvas.addEventListener('click',e=>{ const r=canvas.getBoundingClientRect(); const x=e.clientX-r.left,y=e.clientY-r.top; if(e.ctrlKey || e.metaKey) addCreature('omni',x,y); else if(e.shiftKey) addCreature('herb',x,y); else if(e.altKey) addCreature('pred',x,y); else for(let i=0;i<8;i++) addPlant(x+rand(-18,18),y+rand(-18,18)); });
 })();
 </script>
